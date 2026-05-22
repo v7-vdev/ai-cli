@@ -1,4 +1,4 @@
-import { intro, outro, text, spinner, isCancel, confirm, select } from "@clack/prompts";
+import { intro, outro, text, spinner, isCancel } from "@clack/prompts";
 import chalk from "chalk";
 import ora from "ora";
 import { marked } from "marked";
@@ -7,24 +7,28 @@ import { AIProvider, Message } from "./providers/provider.js";
 import { GeminiProvider } from "./providers/gemini.js";
 import { GroqProvider } from "./providers/groq.js";
 import { AnthropicProvider } from "./providers/anthropic.js";
-import { readFile } from "./tools/readFile.js";
-import { writeFile } from "./tools/writeFile.js";
-import { runCommand } from "./tools/runCommand.js";
 import { McpManager } from "./mcp/client.js";
+import { CommandParser } from "./utils/commandParser.js";
+import { ToolExecutor } from "./tools/executor.js";
+import { CommandContext } from "./commands/command.js";
+import boxen from "boxen";
+import figlet from "figlet";
 
 // @ts-ignore
 marked.setOptions({ renderer: new TerminalRenderer() });
-
-import boxen from "boxen";
-import figlet from "figlet";
 
 export class REPL {
     private provider: AIProvider;
     private history: Message[] = [];
     private mcp: McpManager;
+    private commandParser: CommandParser;
+    private toolExecutor: ToolExecutor;
     
     constructor() {
         this.mcp = new McpManager();
+        this.commandParser = new CommandParser();
+        this.toolExecutor = new ToolExecutor(this.mcp);
+
         if (process.env.ANTHROPIC_API_KEY) {
             this.provider = new AnthropicProvider();
         } else if (process.env.GEMINI_API_KEY) {
@@ -40,6 +44,16 @@ export class REPL {
             role: "system",
             content: "You are an expert AI Coding Assistant CLI. You help the user by writing code, analyzing files, and running commands. Return beautiful markdown format. You have native tool calling and MCP server tools enabled!"
         });
+    }
+
+    private getContext(): CommandContext {
+        return {
+            provider: this.provider,
+            mcp: this.mcp,
+            history: this.history,
+            setHistory: (newHistory: Message[]) => { this.history = newHistory; },
+            runCommand: async (input: string) => { await this.commandParser.execute(input, this.getContext()); }
+        };
     }
 
     public async start() {
@@ -96,221 +110,13 @@ export class REPL {
             if (!cmd) continue;
 
             try {
-                if (cmd.startsWith("/")) {
-                    await this.handleSlashCommand(cmd);
-                } else if (cmd.startsWith("!")) {
-                    await this.handleSlashCommand(`/run ${cmd.substring(1).trim()}`);
-                } else {
+                const wasCommand = await this.commandParser.execute(cmd, this.getContext());
+                if (!wasCommand) {
                     await this.handleChat(cmd);
                 }
             } catch (err: any) {
                 console.log(chalk.red(`\nError: ${err.message}\n`));
             }
-        }
-    }
-
-    private async handleSlashCommand(input: string) {
-        const [command, ...args] = input.split(" ");
-        const argStr = args.join(" ");
-
-        switch ((command || "").toLowerCase()) {
-            case "/models":
-                const availableModels = this.provider.getAvailableModels();
-                const selectedModel = await select({
-                    message: "Select a model:",
-                    options: availableModels,
-                });
-                
-                if (isCancel(selectedModel)) {
-                    console.log(chalk.yellow("Model selection cancelled."));
-                    break;
-                }
-                
-                this.provider.setModel(selectedModel as string);
-                console.log(chalk.green(`✔ Model set to: ${selectedModel}`));
-                break;
-                
-            case "/mcp":
-                const mcpAction = args[0];
-                if (mcpAction === "add") {
-                    const serverName = args[1];
-                    const cmdBinary = args[2];
-                    const cmdArgs = args.slice(3);
-                    if (!serverName || !cmdBinary) {
-                        console.log(chalk.red("Usage: /mcp add <name> <command> [args...]"));
-                        break;
-                    }
-                    const addSpinner = ora(`Adding and connecting MCP server '${serverName}'...`).start();
-                    await this.mcp.addServer(serverName, cmdBinary, cmdArgs);
-                    addSpinner.succeed(`Added and connected MCP server: ${serverName}`);
-                } else if (mcpAction === "list") {
-                    const servers = this.mcp.getServers();
-                    if (servers.length === 0) {
-                        console.log(chalk.yellow("No MCP servers connected."));
-                    } else {
-                        console.log(chalk.cyan(`Connected MCP Servers:\n  - ${servers.join("\n  - ")}`));
-                    }
-                } else {
-                    console.log(chalk.red("Usage: /mcp [add|list]"));
-                }
-                break;
-
-            case "/commands":
-                const selectedCmd = await select({
-                    message: "Select a command to run:",
-                    options: [
-                        { value: "/read", label: "/read - Read a file into context" },
-                        { value: "/write", label: "/write - Write text to a file" },
-                        { value: "/run", label: "/run - Run a terminal command" },
-                        { value: "/models", label: "/models - Change AI model" },
-                        { value: "/mcp", label: "/mcp - Manage MCP Servers" },
-                        { value: "/clear", label: "/clear - Clear conversation history" },
-                        { value: "/help", label: "/help - Show help message" },
-                        { value: "/exit", label: "/exit - Quit the CLI" }
-                    ],
-                });
-
-                if (isCancel(selectedCmd)) {
-                    console.log(chalk.yellow("Command selection cancelled."));
-                    break;
-                }
-
-                const action = selectedCmd as string;
-                
-                if (["/read", "/write", "/run"].includes(action)) {
-                    const argInput = await text({
-                        message: `Enter arguments for ${action}:`,
-                        placeholder: "e.g., package.json or npm test",
-                    });
-                    
-                    if (isCancel(argInput)) {
-                        console.log(chalk.yellow("Command cancelled."));
-                        break;
-                    }
-                    
-                    await this.handleSlashCommand(`${action} ${(argInput as string).trim()}`);
-                } else if (action === "/exit") {
-                    outro(chalk.magenta("Goodbye!"));
-                    process.exit(0);
-                } else {
-                    await this.handleSlashCommand(action);
-                }
-                break;
-
-            case "/help":
-                console.log(chalk.cyan(`
-Available Commands:
-  ! <command>           - Shorthand to run a terminal command (e.g. ! git status)
-  /commands             - Interactive command menu
-  /models               - Interactive model selection menu
-  /mcp [add|list]       - Manage Model Context Protocol (MCP) servers
-  /read <file>          - Read a file and add it to the AI's context
-  /write <file> <text>  - Write text to a file (or let AI generate it)
-  /run <command>        - Run a terminal command and add output to context
-  /clear                - Clear conversation history
-  /help                 - Show this help message
-  /exit                 - Quit the CLI
-                `));
-                break;
-                
-            case "/read":
-                if (!argStr) {
-                    console.log(chalk.red("Usage: /read <file>"));
-                    break;
-                }
-                const readRes = readFile(argStr);
-                if (readRes.success) {
-                    console.log(chalk.green(`✔ Read ${argStr} successfully.`));
-                    this.history.push({
-                        role: "user",
-                        content: `Context added from file '${argStr}':\n\n${readRes.content}`
-                    });
-                    this.history.push({
-                        role: "model",
-                        content: `I have received the context from ${argStr}.`
-                    });
-                } else {
-                    console.log(chalk.red(`✖ Failed to read ${argStr}: ${readRes.content}`));
-                }
-                break;
-
-            case "/run":
-                if (!argStr) {
-                    console.log(chalk.red("Usage: /run <command>"));
-                    break;
-                }
-                const runSpinner = ora(`Running: ${argStr}`).start();
-                const runRes = await runCommand(argStr);
-                
-                if (runRes.success) {
-                    runSpinner.succeed(`Finished: ${argStr}`);
-                    console.log(chalk.gray(runRes.output || ""));
-                } else {
-                    runSpinner.fail(`Failed: ${argStr}`);
-                    console.log(chalk.red(runRes.output || ""));
-                }
-                
-                this.history.push({
-                    role: "user",
-                    content: `I ran the command '${argStr}' and got this output:\n\n${runRes.output || ""}`
-                });
-                this.history.push({
-                    role: "model",
-                    content: `I have received the command output.`
-                });
-                break;
-
-            case "/write":
-                if (!args[0]) {
-                    console.log(chalk.red("Usage: /write <file> [prompt or content]"));
-                    break;
-                }
-                const file = args[0];
-                const contentStr = args.slice(1).join(" ");
-                
-                let finalContent = contentStr;
-                
-                if (contentStr.toLowerCase().startsWith("generate ")) {
-                    const prompt = contentStr.substring(9);
-                    
-                    const genSpinner = ora("Generating code...").start();
-                    const tempHistory = [...this.history, {
-                        role: "user" as const,
-                        content: `Generate code for file ${file}. Task: ${prompt}. Return ONLY the raw code without markdown blocks or explanations.`
-                    }];
-                    
-                    const genRes = await this.provider.chat(tempHistory);
-                    finalContent = genRes.text || finalContent;
-                    genSpinner.succeed("Code generated.");
-                }
-
-                const writeRes = writeFile(file, finalContent, true);
-                if (writeRes === "CREATED" || writeRes === "EXISTS") {
-                    console.log(chalk.green(`✔ Successfully wrote to ${file}`));
-                    this.history.push({
-                        role: "user",
-                        content: `I have written content to '${file}'.`
-                    });
-                    this.history.push({
-                        role: "model",
-                        content: `Acknowledged.`
-                    });
-                } else {
-                    console.log(chalk.red(`✖ Failed to write to ${file}: ${writeRes}`));
-                }
-                break;
-
-            case "/clear":
-                this.history = [{
-                    role: "system",
-                    content: "You are an expert AI Coding Assistant CLI. You help the user by writing code, analyzing files, and running commands. Return beautiful markdown format. You have native tool calling enabled! You can read files, write files, and run commands autonomously to accomplish tasks."
-                }];
-                console.log(chalk.green("✔ History cleared."));
-                break;
-
-            default:
-                console.log(chalk.red(`Unknown command: ${command}. Type /commands for an interactive menu.`));
-                break;
         }
     }
 
@@ -355,66 +161,7 @@ Available Commands:
                 const fn = response.functionCall;
                 this.history.push({ role: "model", functionCall: fn });
 
-                let toolResult: any;
-
-                if (fn.name.startsWith("mcp__")) {
-                    const parts = fn.name.split("__");
-                    const serverName = parts[1] as string;
-                    const toolName = parts[2] as string;
-                    
-                    const allow = await confirm({
-                        message: chalk.red.bold(`Allow AI to use MCP tool '${toolName}' on '${serverName}'?`)
-                    });
-                    
-                    if (allow) {
-                        const mcpSpinner = ora(`Running MCP Tool: ${toolName}`).start();
-                        const res = await this.mcp.callMcpTool(serverName, toolName, fn.args);
-                        mcpSpinner.succeed(`Finished MCP Tool.`);
-                        toolResult = res;
-                    } else {
-                        toolResult = "User denied permission.";
-                        console.log(chalk.yellow("✖ Denied."));
-                    }
-                } else if (fn.name === "readFile") {
-                    console.log(chalk.gray(`> AI is reading file: ${fn.args.path}`));
-                    const res = readFile(fn.args.path);
-                    toolResult = res.success ? res.content : res.content;
-                } else if (fn.name === "writeFile") {
-                    const allow = await confirm({
-                        message: chalk.red.bold(`Allow AI to write to ${fn.args.path}?`)
-                    });
-                    
-                    if (allow) {
-                        const res = writeFile(fn.args.path, fn.args.content, true);
-                        toolResult = res;
-                        console.log(chalk.green(`✔ Wrote to ${fn.args.path}`));
-                    } else {
-                        toolResult = "User denied permission to write file.";
-                        console.log(chalk.yellow("✖ Denied."));
-                    }
-                } else if (fn.name === "runCommand") {
-                    const allow = await confirm({
-                        message: chalk.red.bold(`Allow AI to run command '${fn.args.command}'?`)
-                    });
-                    
-                    if (allow) {
-                        const runSpinner = ora(`Running: ${fn.args.command}`).start();
-                        const res = await runCommand(fn.args.command);
-                        if (res.success) {
-                            runSpinner.succeed(`Finished.`);
-                            console.log(chalk.gray(res.output || ""));
-                        } else {
-                            runSpinner.fail(`Failed.`);
-                            console.log(chalk.red(res.output || ""));
-                        }
-                        toolResult = res.output;
-                    } else {
-                        toolResult = "User denied permission to run command.";
-                        console.log(chalk.yellow("✖ Denied."));
-                    }
-                } else {
-                    toolResult = `Unknown tool: ${fn.name}`;
-                }
+                const toolResult = await this.toolExecutor.executeTool(fn);
 
                 this.history.push({
                     role: "user",
