@@ -4,6 +4,7 @@ import { RuntimeContext } from "../context/runtimeContext.js";
 import { modelsCommand } from "../commands/models.js";
 import { mcpCommand } from "../commands/mcp.js";
 import { readCommand, writeCommand } from "../commands/files.js";
+import { generateCommand } from "../commands/generate.js";
 import { runCommand } from "../commands/run.js";
 import { clearCommand, helpCommand, exitCommand } from "../commands/system.js";
 import { interactiveCommand } from "../commands/interactive.js";
@@ -16,6 +17,7 @@ export class CommandParser {
         this.register(mcpCommand);
         this.register(readCommand);
         this.register(writeCommand);
+        this.register(generateCommand);
         this.register(runCommand);
         this.register(clearCommand);
         this.register(helpCommand);

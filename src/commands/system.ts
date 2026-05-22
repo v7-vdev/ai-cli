@@ -23,7 +23,8 @@ Available Commands:
   /models               - Interactive model selection menu
   /mcp [add|list]       - Manage Model Context Protocol (MCP) servers
   /read <file>          - Read a file and add it to the AI's context
-  /write <file> <text>  - Write text to a file (or let AI generate it)
+  /write <file> <text>  - Write text to a file
+  /generate <file> <prompt> - Generate code using AI and write it to a file
   /run <command>        - Run a terminal command and add output to context
   /clear                - Clear conversation history
   /help                 - Show this help message
