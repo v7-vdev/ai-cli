@@ -31,6 +31,9 @@ export const readCommand: Command = {
     }
 };
 
+import fs from "fs";
+import { confirm, isCancel } from "@clack/prompts";
+
 export const writeCommand: Command = {
     name: "/write",
     description: "Write text to a file (or let AI generate it)",
@@ -40,8 +43,20 @@ export const writeCommand: Command = {
             return;
         }
         const file = args[0];
-        const contentStr = args.slice(1).join(" ");
         
+        if (fs.existsSync(file)) {
+            const shouldOverwrite = await confirm({
+                message: chalk.yellow(`File '${file}' already exists. Overwrite?`),
+                initialValue: false
+            });
+            
+            if (isCancel(shouldOverwrite) || !shouldOverwrite) {
+                console.log(chalk.yellow("✖ Cancelled write."));
+                return;
+            }
+        }
+        
+        const contentStr = args.slice(1).join(" ");
         let finalContent = contentStr;
         
         if (contentStr.toLowerCase().startsWith("generate ")) {

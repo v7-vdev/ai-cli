@@ -4,6 +4,9 @@ import { Command } from "./command.js";
 import { RuntimeContext } from "../context/runtimeContext.js";
 import { writeFile } from "../tools/writeFile.js";
 
+import fs from "fs";
+import { confirm, isCancel } from "@clack/prompts";
+
 export const generateCommand: Command = {
     name: "/generate",
     description: "Generate code and write to a file",
@@ -15,6 +18,18 @@ export const generateCommand: Command = {
         
         const file = args[0] as string;
         const prompt = args.slice(1).join(" ");
+        
+        if (fs.existsSync(file)) {
+            const shouldOverwrite = await confirm({
+                message: chalk.yellow(`File '${file}' already exists. Overwrite?`),
+                initialValue: false
+            });
+            
+            if (isCancel(shouldOverwrite) || !shouldOverwrite) {
+                console.log(chalk.yellow("✖ Cancelled generate."));
+                return;
+            }
+        }
         
         const genSpinner = ora("Generating code...").start();
         const tempHistory = [...ctx.history, {
