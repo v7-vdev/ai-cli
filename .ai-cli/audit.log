@@ -1,0 +1,5 @@
+[2026-05-22T11:09:12.631Z] [INFO] [CONTEXT] Initialized with Groq provider
+[2026-05-22T11:09:30.626Z] [INFO] [REPL] Chat loop started for input: hello
+[2026-05-22T11:09:42.155Z] [INFO] [REPL] Chat loop started for input: what did i just say?
+[2026-05-22T11:09:55.792Z] [INFO] [REPL] Chat loop started for input: what did i just say?
+[2026-05-22T11:12:34.809Z] [INFO] [CONTEXT] Initialized with Groq provider
