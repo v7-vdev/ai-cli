@@ -1,22 +1,38 @@
 {
   "name": "ai-cli",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "AI Coding Assistant CLI",
+  "main": "dist/index.js",
+  "bin": {
+    "ai-cli": "./dist/index.js"
+  },
   "scripts": {
-    "dev": "tsx src/index.ts"
+    "dev": "tsx src/index.ts",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "devDependencies": {
+    "@types/figlet": "^1.7.0",
+    "@types/marked-terminal": "^6.1.1",
     "@types/node": "^25.9.1",
     "tsx": "^4.22.3",
     "typescript": "^6.0.3"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.98.0",
+    "@clack/prompts": "^1.4.0",
+    "@google/genai": "^2.6.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "boxen": "^8.0.1",
     "chalk": "^5.6.2",
-    "dotenv": "^17.4.2"
+    "dotenv": "^17.4.2",
+    "figlet": "^1.11.0",
+    "marked": "^15.0.12",
+    "marked-terminal": "^7.3.0",
+    "ora": "^9.4.0",
+    "zod": "^4.4.3"
   }
 }

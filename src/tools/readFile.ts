@@ -1,17 +1,19 @@
 import fs from "fs";
+import path from "path";
 
 export function readFile(filePath: string) {
   try {
-    const content = fs.readFileSync(filePath, "utf-8");
+    const absolutePath = path.resolve(process.cwd(), filePath);
+    const content = fs.readFileSync(absolutePath, "utf-8");
 
     return {
       success: true,
       content,
     };
-  } catch {
+  } catch (err: any) {
     return {
       success: false,
-      content: "File not found.",
+      content: `File not found or unreadable: ${err.message}`,
     };
   }
 }
