@@ -4,13 +4,13 @@ import { confirm } from "@clack/prompts";
 import { readFile } from "./readFile.js";
 import { writeFile } from "./writeFile.js";
 import { runCommand } from "./runCommand.js";
-import { McpManager } from "../mcp/client.js";
+import { RuntimeContext } from "../context/runtimeContext.js";
 
 export class ToolExecutor {
-    private mcp: McpManager;
+    private ctx: RuntimeContext;
 
-    constructor(mcp: McpManager) {
-        this.mcp = mcp;
+    constructor(ctx: RuntimeContext) {
+        this.ctx = ctx;
     }
 
     public async executeTool(fn: { name: string; args: any }): Promise<any> {
@@ -28,7 +28,7 @@ export class ToolExecutor {
             if (allow) {
                 const mcpSpinner = ora(`Running MCP Tool: ${toolName}`).start();
                 try {
-                    const res = await this.mcp.callMcpTool(serverName, toolName, fn.args);
+                    const res = await this.ctx.mcp.callMcpTool(serverName, toolName, fn.args);
                     mcpSpinner.succeed(`Finished MCP Tool.`);
                     toolResult = res;
                 } catch (err: any) {

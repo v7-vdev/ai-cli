@@ -1,5 +1,6 @@
 import chalk from "chalk";
-import { Command, CommandContext } from "../commands/command.js";
+import { Command } from "../commands/command.js";
+import { RuntimeContext } from "../context/runtimeContext.js";
 import { modelsCommand } from "../commands/models.js";
 import { mcpCommand } from "../commands/mcp.js";
 import { readCommand, writeCommand } from "../commands/files.js";
@@ -26,7 +27,7 @@ export class CommandParser {
         this.commands.set(cmd.name, cmd);
     }
 
-    public async execute(input: string, ctx: CommandContext): Promise<boolean> {
+    public async execute(input: string, ctx: RuntimeContext): Promise<boolean> {
         let commandStr = input;
         
         // Handle ! shorthand

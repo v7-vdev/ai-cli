@@ -1,11 +1,12 @@
 import chalk from "chalk";
 import ora from "ora";
-import { Command, CommandContext } from "./command.js";
+import { Command } from "./command.js";
+import { RuntimeContext } from "../context/runtimeContext.js";
 
 export const mcpCommand: Command = {
     name: "/mcp",
     description: "Manage Model Context Protocol (MCP) servers",
-    execute: async (args: string[], ctx: CommandContext) => {
+    execute: async (args: string[], ctx: RuntimeContext) => {
         const mcpAction = args[0];
         if (mcpAction === "add") {
             const serverName = args[1];

@@ -1,13 +1,14 @@
 import chalk from "chalk";
 import ora from "ora";
-import { Command, CommandContext } from "./command.js";
+import { Command } from "./command.js";
+import { RuntimeContext } from "../context/runtimeContext.js";
 import { readFile } from "../tools/readFile.js";
 import { writeFile } from "../tools/writeFile.js";
 
 export const readCommand: Command = {
     name: "/read",
     description: "Read a file and add it to the AI's context",
-    execute: async (args: string[], ctx: CommandContext) => {
+    execute: async (args: string[], ctx: RuntimeContext) => {
         const argStr = args.join(" ");
         if (!argStr) {
             console.log(chalk.red("Usage: /read <file>"));
@@ -16,16 +17,14 @@ export const readCommand: Command = {
         const readRes = readFile(argStr);
         if (readRes.success) {
             console.log(chalk.green(`✔ Read ${argStr} successfully.`));
-            const newHistory = [...ctx.history];
-            newHistory.push({
+            ctx.addMessage({
                 role: "user",
                 content: `Context added from file '${argStr}':\n\n${readRes.content}`
             });
-            newHistory.push({
+            ctx.addMessage({
                 role: "model",
                 content: `I have received the context from ${argStr}.`
             });
-            ctx.setHistory(newHistory);
         } else {
             console.log(chalk.red(`✖ Failed to read ${argStr}: ${readRes.content}`));
         }
@@ -35,7 +34,7 @@ export const readCommand: Command = {
 export const writeCommand: Command = {
     name: "/write",
     description: "Write text to a file (or let AI generate it)",
-    execute: async (args: string[], ctx: CommandContext) => {
+    execute: async (args: string[], ctx: RuntimeContext) => {
         if (!args[0]) {
             console.log(chalk.red("Usage: /write <file> [prompt or content]"));
             return;
@@ -62,16 +61,14 @@ export const writeCommand: Command = {
         const writeRes = writeFile(file, finalContent, true);
         if (writeRes === "CREATED" || writeRes === "EXISTS") {
             console.log(chalk.green(`✔ Successfully wrote to ${file}`));
-            const newHistory = [...ctx.history];
-            newHistory.push({
+            ctx.addMessage({
                 role: "user",
                 content: `I have written content to '${file}'.`
             });
-            newHistory.push({
+            ctx.addMessage({
                 role: "model",
                 content: `Acknowledged.`
             });
-            ctx.setHistory(newHistory);
         } else {
             console.log(chalk.red(`✖ Failed to write to ${file}: ${writeRes}`));
         }

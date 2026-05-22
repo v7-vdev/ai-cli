@@ -1,15 +1,13 @@
 import chalk from "chalk";
 import { outro } from "@clack/prompts";
-import { Command, CommandContext } from "./command.js";
+import { Command } from "./command.js";
+import { RuntimeContext } from "../context/runtimeContext.js";
 
 export const clearCommand: Command = {
     name: "/clear",
     description: "Clear conversation history",
-    execute: async (args: string[], ctx: CommandContext) => {
-        ctx.setHistory([{
-            role: "system",
-            content: "You are an expert AI Coding Assistant CLI. You help the user by writing code, analyzing files, and running commands. Return beautiful markdown format. You have native tool calling and MCP server tools enabled!"
-        }]);
+    execute: async (args: string[], ctx: RuntimeContext) => {
+        ctx.clearHistory();
         console.log(chalk.green("✔ History cleared."));
     }
 };

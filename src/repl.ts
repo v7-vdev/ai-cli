@@ -3,14 +3,9 @@ import chalk from "chalk";
 import ora from "ora";
 import { marked } from "marked";
 import TerminalRenderer from "marked-terminal";
-import { AIProvider, Message } from "./providers/provider.js";
-import { GeminiProvider } from "./providers/gemini.js";
-import { GroqProvider } from "./providers/groq.js";
-import { AnthropicProvider } from "./providers/anthropic.js";
-import { McpManager } from "./mcp/client.js";
 import { CommandParser } from "./utils/commandParser.js";
 import { ToolExecutor } from "./tools/executor.js";
-import { CommandContext } from "./commands/command.js";
+import { RuntimeContext } from "./context/runtimeContext.js";
 import boxen from "boxen";
 import figlet from "figlet";
 
@@ -18,42 +13,19 @@ import figlet from "figlet";
 marked.setOptions({ renderer: new TerminalRenderer() });
 
 export class REPL {
-    private provider: AIProvider;
-    private history: Message[] = [];
-    private mcp: McpManager;
+    private ctx: RuntimeContext;
     private commandParser: CommandParser;
     private toolExecutor: ToolExecutor;
     
     constructor() {
-        this.mcp = new McpManager();
         this.commandParser = new CommandParser();
-        this.toolExecutor = new ToolExecutor(this.mcp);
-
-        if (process.env.ANTHROPIC_API_KEY) {
-            this.provider = new AnthropicProvider();
-        } else if (process.env.GEMINI_API_KEY) {
-            this.provider = new GeminiProvider();
-        } else if (process.env.GROQ_API_KEY) {
-            this.provider = new GroqProvider();
-        } else {
-            console.log(chalk.yellow("Warning: No API keys found in .env. Defaulting to Gemini."));
-            this.provider = new GeminiProvider();
-        }
         
-        this.history.push({
-            role: "system",
-            content: "You are an expert AI Coding Assistant CLI. You help the user by writing code, analyzing files, and running commands. Return beautiful markdown format. You have native tool calling and MCP server tools enabled!"
+        // Pass a bound reference to executeCommand into RuntimeContext
+        this.ctx = new RuntimeContext(async (input: string) => {
+            return await this.commandParser.execute(input, this.ctx);
         });
-    }
 
-    private getContext(): CommandContext {
-        return {
-            provider: this.provider,
-            mcp: this.mcp,
-            history: this.history,
-            setHistory: (newHistory: Message[]) => { this.history = newHistory; },
-            runCommand: async (input: string) => { await this.commandParser.execute(input, this.getContext()); }
-        };
+        this.toolExecutor = new ToolExecutor(this.ctx);
     }
 
     public async start() {
@@ -71,8 +43,8 @@ export class REPL {
         console.log(orange(figlet.textSync('OPEN\nCODE', { font: 'ANSI Shadow' })));
         
         const initSpinner = ora("Initializing MCP servers...").start();
-        await this.mcp.connectAll();
-        initSpinner.succeed(`Connected to ${this.mcp.getServers().length} MCP server(s).`);
+        await this.ctx.initMcp();
+        initSpinner.succeed(`Connected to ${this.ctx.mcp.getServers().length} MCP server(s).`);
 
         console.log(chalk.bold.white("\nSecurity notes:\n"));
         
@@ -110,7 +82,7 @@ export class REPL {
             if (!cmd) continue;
 
             try {
-                const wasCommand = await this.commandParser.execute(cmd, this.getContext());
+                const wasCommand = await this.ctx.executeCommand(cmd);
                 if (!wasCommand) {
                     await this.handleChat(cmd);
                 }
@@ -121,7 +93,7 @@ export class REPL {
     }
 
     private async handleChat(input: string) {
-        this.history.push({ role: "user", content: input });
+        this.ctx.addMessage({ role: "user", content: input });
         
         while (true) {
             const s = spinner();
@@ -145,25 +117,25 @@ export class REPL {
                 }
             ];
 
-            const mcpTools = await this.mcp.getMcpTools();
+            const mcpTools = await this.ctx.mcp.getMcpTools();
             const allTools = [...nativeTools, ...mcpTools];
 
-            const response = await this.provider.chat(this.history, allTools);
+            const response = await this.ctx.provider.chat(this.ctx.history, allTools);
             
             s.stop(chalk.green("AI:"));
             
             if (response.text && response.text !== "No response text.") {
                 console.log(marked.parse(response.text));
-                this.history.push({ role: "model", content: response.text });
+                this.ctx.addMessage({ role: "model", content: response.text });
             }
 
             if (response.functionCall) {
                 const fn = response.functionCall;
-                this.history.push({ role: "model", functionCall: fn });
+                this.ctx.addMessage({ role: "model", functionCall: fn });
 
                 const toolResult = await this.toolExecutor.executeTool(fn);
 
-                this.history.push({
+                this.ctx.addMessage({
                     role: "user",
                     functionResponse: {
                         name: fn.name,

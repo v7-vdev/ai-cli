@@ -1,11 +1,12 @@
 import chalk from "chalk";
 import { select, isCancel, text, outro } from "@clack/prompts";
-import { Command, CommandContext } from "./command.js";
+import { Command } from "./command.js";
+import { RuntimeContext } from "../context/runtimeContext.js";
 
 export const interactiveCommand: Command = {
     name: "/commands",
     description: "Interactive command menu",
-    execute: async (args: string[], ctx: CommandContext) => {
+    execute: async (args: string[], ctx: RuntimeContext) => {
         const selectedCmd = await select({
             message: "Select a command to run:",
             options: [
@@ -38,12 +39,12 @@ export const interactiveCommand: Command = {
                 return;
             }
             
-            await ctx.runCommand(`${action} ${(argInput as string).trim()}`);
+            await ctx.executeCommand(`${action} ${(argInput as string).trim()}`);
         } else if (action === "/exit") {
             outro(chalk.magenta("Goodbye!"));
             process.exit(0);
         } else {
-            await ctx.runCommand(action);
+            await ctx.executeCommand(action);
         }
     }
 };
