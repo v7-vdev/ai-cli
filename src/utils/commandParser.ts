@@ -7,6 +7,7 @@ import { readCommand, writeCommand } from "../commands/files.js";
 import { generateCommand } from "../commands/generate.js";
 import { editCommand } from "../commands/edit.js";
 import { runCommand } from "../commands/run.js";
+import { logsCommand } from "../commands/logs.js";
 import { clearCommand, helpCommand, exitCommand } from "../commands/system.js";
 import { interactiveCommand } from "../commands/interactive.js";
 
@@ -21,6 +22,7 @@ export class CommandParser {
         this.register(generateCommand);
         this.register(editCommand);
         this.register(runCommand);
+        this.register(logsCommand);
         this.register(clearCommand);
         this.register(helpCommand);
         this.register(exitCommand);

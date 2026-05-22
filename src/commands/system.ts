@@ -27,6 +27,7 @@ Available Commands:
   /generate <file> <prompt> - Generate code using AI and write it to a file
   /edit <file> <prompt> - Edit an existing file safely with AI
   /run <command>        - Run a terminal command and add output to context
+  /logs [show|tail|clear] - Manage and view execution audit logs
   /clear                - Clear conversation history
   /help                 - Show this help message
   /exit                 - Quit the CLI

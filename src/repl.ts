@@ -1,4 +1,4 @@
-import { intro, outro, text, spinner, isCancel } from "@clack/prompts";
+import { intro, outro, text, spinner, isCancel, confirm } from "@clack/prompts";
 import chalk from "chalk";
 import ora from "ora";
 import { marked } from "marked";
@@ -95,7 +95,30 @@ export class REPL {
     private async handleChat(input: string) {
         this.ctx.addMessage({ role: "user", content: input });
         
+        let toolExecutionCount = 0;
+        const MAX_AUTONOMOUS_STEPS = 5;
+
+        this.ctx.logger.log("INFO", "REPL", `Chat loop started for input: ${input}`);
+
         while (true) {
+            if (toolExecutionCount >= MAX_AUTONOMOUS_STEPS) {
+                this.ctx.logger.log("WARN", "REPL", `Autonomous step limit reached (${MAX_AUTONOMOUS_STEPS}). Prompting user.`);
+                console.log(chalk.yellow(`\n⚠ Reached maximum autonomous steps (${MAX_AUTONOMOUS_STEPS}).`));
+                const continueLoop = await confirm({
+                    message: chalk.yellow.bold("Allow AI to continue its chain of thought?"),
+                    initialValue: true
+                });
+                
+                if (isCancel(continueLoop) || !continueLoop) {
+                    console.log(chalk.red("✖ Autonomous loop aborted by user."));
+                    this.ctx.logger.log("WARN", "REPL", `Autonomous loop aborted by user.`);
+                    break;
+                } else {
+                    this.ctx.logger.log("INFO", "REPL", `User allowed autonomous loop to continue.`);
+                    toolExecutionCount = 0; // Reset counter if allowed
+                }
+            }
+
             const s = spinner();
             s.start(chalk.yellow("Thinking..."));
             
@@ -133,6 +156,7 @@ export class REPL {
                 const fn = response.functionCall;
                 this.ctx.addMessage({ role: "model", functionCall: fn });
 
+                toolExecutionCount++;
                 const toolResult = await this.toolExecutor.executeTool(fn);
 
                 this.ctx.addMessage({

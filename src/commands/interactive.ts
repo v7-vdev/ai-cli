@@ -15,6 +15,7 @@ export const interactiveCommand: Command = {
                 { value: "/generate", label: "/generate - Generate code and write to a file" },
                 { value: "/edit", label: "/edit - Edit an existing file safely with AI" },
                 { value: "/run", label: "/run - Run a terminal command" },
+                { value: "/logs", label: "/logs - Manage audit logs (show/tail/clear)" },
                 { value: "/models", label: "/models - Change AI model" },
                 { value: "/mcp", label: "/mcp - Manage MCP Servers" },
                 { value: "/clear", label: "/clear - Clear conversation history" },
@@ -30,7 +31,7 @@ export const interactiveCommand: Command = {
 
         const action = selectedCmd as string;
         
-        if (["/read", "/write", "/generate", "/edit", "/run"].includes(action)) {
+        if (["/read", "/write", "/generate", "/edit", "/run", "/logs"].includes(action)) {
             const argInput = await text({
                 message: `Enter arguments for ${action}:`,
                 placeholder: "e.g., package.json or npm test",

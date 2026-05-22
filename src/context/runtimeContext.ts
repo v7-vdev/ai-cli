@@ -4,12 +4,16 @@ import { GeminiProvider } from "../providers/gemini.js";
 import { GroqProvider } from "../providers/groq.js";
 import { AnthropicProvider } from "../providers/anthropic.js";
 import { McpManager } from "../mcp/client.js";
+import { PermissionManager } from "../permissions/permissionManager.js";
+import { AuditLogger } from "../logs/auditLogger.js";
 
 export class RuntimeContext {
     public provider: AIProvider;
     public history: Message[] = [];
     public mcp: McpManager;
     public cwd: string;
+    public permissions: PermissionManager;
+    public logger: AuditLogger;
 
     // A reference to the command parser so commands can dynamically trigger other commands
     // We type it as 'any' or a function to avoid circular dependencies
@@ -18,17 +22,23 @@ export class RuntimeContext {
     constructor(executeCommand: (input: string) => Promise<boolean>) {
         this.executeCommand = executeCommand;
         this.mcp = new McpManager();
+        this.logger = new AuditLogger();
+        this.permissions = new PermissionManager(this.logger);
         this.cwd = process.cwd();
         
         if (process.env.ANTHROPIC_API_KEY) {
             this.provider = new AnthropicProvider();
+            this.logger.log("INFO", "CONTEXT", "Initialized with Anthropic provider");
         } else if (process.env.GEMINI_API_KEY) {
             this.provider = new GeminiProvider();
+            this.logger.log("INFO", "CONTEXT", "Initialized with Gemini provider");
         } else if (process.env.GROQ_API_KEY) {
             this.provider = new GroqProvider();
+            this.logger.log("INFO", "CONTEXT", "Initialized with Groq provider");
         } else {
             console.log(chalk.yellow("Warning: No API keys found in .env. Defaulting to Gemini."));
             this.provider = new GeminiProvider();
+            this.logger.log("WARN", "CONTEXT", "No API keys found, defaulted to Gemini");
         }
 
         this.initSystemPrompt();
