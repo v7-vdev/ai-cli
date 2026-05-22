@@ -25,6 +25,7 @@ Available Commands:
   /read <file>          - Read a file and add it to the AI's context
   /write <file> <text>  - Write text to a file
   /generate <file> <prompt> - Generate code using AI and write it to a file
+  /edit <file> <prompt> - Edit an existing file safely with AI
   /run <command>        - Run a terminal command and add output to context
   /clear                - Clear conversation history
   /help                 - Show this help message

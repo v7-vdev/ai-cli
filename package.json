@@ -15,6 +15,7 @@
   "license": "ISC",
   "type": "module",
   "devDependencies": {
+    "@types/diff": "^7.0.2",
     "@types/figlet": "^1.7.0",
     "@types/marked-terminal": "^6.1.1",
     "@types/node": "^25.9.1",
@@ -28,6 +29,7 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "boxen": "^8.0.1",
     "chalk": "^5.6.2",
+    "diff": "^9.0.0",
     "dotenv": "^17.4.2",
     "figlet": "^1.11.0",
     "marked": "^15.0.12",
