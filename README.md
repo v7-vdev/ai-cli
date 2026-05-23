@@ -1,16 +1,4 @@
-Your README now needs to reflect:
 
-```txt id="1"
-workflow orchestration + planning architecture
-```
-
-NOT just:
-
-```txt id="2"
-AI terminal chat
-```
-
-Use this updated version.
 
 # AI CLI
 
