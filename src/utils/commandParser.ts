@@ -10,6 +10,7 @@ import { runCommand } from "../commands/run.js";
 import { logsCommand } from "../commands/logs.js";
 import { clearCommand, helpCommand, exitCommand } from "../commands/system.js";
 import { interactiveCommand } from "../commands/interactive.js";
+import { planCommand } from "../commands/plan.js";
 
 export class CommandParser {
     private commands: Map<string, Command> = new Map();
@@ -27,6 +28,7 @@ export class CommandParser {
         this.register(helpCommand);
         this.register(exitCommand);
         this.register(interactiveCommand);
+        this.register(planCommand);
     }
 
     private register(cmd: Command) {
