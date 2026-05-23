@@ -1,6 +1,13 @@
 #!/usr/bin/env node
 
 import { REPL } from "./repl.js";
+import { renderApp } from "./ui/renderer/index.js";
 
-const cli = new REPL();
-cli.start();
+const args = process.argv.slice(2);
+
+if (args.includes('--legacy')) {
+    const cli = new REPL();
+    cli.start();
+} else {
+    renderApp();
+}

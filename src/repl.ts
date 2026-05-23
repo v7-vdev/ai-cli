@@ -7,7 +7,8 @@ import { CommandParser } from "./utils/commandParser.js";
 import { ToolExecutor } from "./tools/executor.js";
 import { RuntimeContext } from "./context/runtimeContext.js";
 import boxen from "boxen";
-import figlet from "figlet";
+import { generateBanner } from "./ui/branding/banner.js";
+import { STARTUP_MESSAGES, SECURITY_NOTES } from "./ui/branding/messages.js";
 
 // @ts-ignore
 marked.setOptions({ renderer: new TerminalRenderer() });
@@ -31,41 +32,24 @@ export class REPL {
     public async start() {
         console.clear();
         
-        const orange = chalk.hex('#D97757');
+        console.log(generateBanner(this.ctx.provider.constructor.name.replace('Provider', ''), "Active"));
         
-        console.log(boxen(orange('* Welcome to Open Code research preview!'), {
-            padding: 0.5,
-            borderColor: '#D97757',
-            borderStyle: 'round',
-            margin: { bottom: 1 }
-        }));
-        
-        console.log(orange(figlet.textSync('OPEN\nCODE', { font: 'ANSI Shadow' })));
-        
-        const initSpinner = ora("Initializing MCP servers...").start();
+        const initSpinner = ora(STARTUP_MESSAGES.mcpInit).start();
         await this.ctx.initMcp();
-        initSpinner.succeed(`Connected to ${this.ctx.mcp.getServers().length} MCP server(s).`);
+        initSpinner.succeed(STARTUP_MESSAGES.mcpSuccess(this.ctx.mcp.getServers().length));
 
         console.log(chalk.bold.white("\nSecurity notes:\n"));
-        
-        console.log(chalk.gray(`1. `) + chalk.white(`Open Code is currently in research preview`));
-        console.log(chalk.gray(`   This beta version may have limitations or unexpected behaviors.`));
-        console.log(chalk.gray(`   Run /bug at any time to report issues.\n`));
-        
-        console.log(chalk.gray(`2. `) + chalk.white(`Open Code can make mistakes`));
-        console.log(chalk.gray(`   You should always review Open Code's responses, especially when`));
-        console.log(chalk.gray(`   running code.\n`));
-        
-        console.log(chalk.gray(`3. `) + chalk.white(`Due to prompt injection risks, only use it with code you trust`));
-        console.log(chalk.gray(`   For more details see:`));
-        console.log(chalk.gray(`   https://github.com/open-code/security\n`));
+        SECURITY_NOTES.forEach((note, index) => {
+            console.log(chalk.gray(`${index + 1}. `) + chalk.white(note));
+        });
+        console.log(""); // newline
 
         await text({
             message: chalk.blue("Press Enter to continue..."),
         });
 
         console.clear();
-        console.log(chalk.gray("Type /help for commands or /exit to quit.\n"));
+        console.log(chalk.gray(STARTUP_MESSAGES.helpHint + "\n"));
 
         while (true) {
             const input = await text({
