@@ -1,43 +1,119 @@
+Your README now needs to reflect:
+
+```txt id="1"
+workflow orchestration + planning architecture
+```
+
+NOT just:
+
+```txt id="2"
+AI terminal chat
+```
+
+Use this updated version.
 
 # AI CLI
 
-A terminal-first AI developer assistant with autonomous tooling, safe editing workflows, runtime permissions, and audit logging.
+A terminal-first AI developer assistant focused on safe workflow orchestration, planning, autonomous tooling, runtime permissions, and audit logging.
 
-Inspired by tools like Claude Code, OpenCode, and modern AI developer workflows.
+Inspired by tools like Claude Code, OpenCode, and modern AI developer runtimes.
 
 ---
 
 ## Features
 
-- AI chat in terminal
-- Autonomous tool execution
-- MCP support
-- Runtime context system
-- Permission manager
-- Structured audit logging
-- Safe file editing
-- Diff previews
-- Overwrite protection
-- Multi-provider support
-- Interactive command system
-- Autonomous loop safeguards
-- Session permission cache
-- Backup generation
+* AI chat in terminal
+* Structured `/plan` workflow system
+* Autonomous tool execution
+* Runtime orchestration architecture
+* MCP support
+* Runtime context system
+* Permission manager
+* Structured audit logging
+* Safe file editing
+* Diff previews
+* Overwrite protection
+* Multi-provider support
+* Interactive command system
+* Autonomous loop safeguards
+* Session permission cache
+* Backup generation
+* Timeout protection
+* Graceful fallback handling
+* Validation layer for malformed AI output
 
+---
 
 ## Commands
 
+### Planning Commands
+
+* `/plan`
+
+Examples:
+
+```bash
+/plan build REST API
+/plan add JWT authentication
+/plan refactor RuntimeContext
+```
+
+---
+
 ### File Commands
 
-- `/read`
-- `/generate`
-- `/edit`
+* `/read`
+* `/generate`
+* `/edit`
+
+Examples:
+
+```bash
+/read src/index.ts
+/generate api.js express server
+/edit api.js add error handling
+```
+
+---
 
 ### System Commands
 
-- `/logs`
-- `/clear`
-- `/models`
+* `/logs`
+* `/clear`
+* `/models`
+
+---
+
+## `/plan` Workflow
+
+The `/plan` system generates structured execution plans BEFORE making any changes.
+
+Generated plan sections include:
+
+* Objective
+* Files Likely Affected
+* Step-by-Step Plan
+* Commands Needed
+* Risks / Warnings
+* Estimated Complexity
+* Recommended Next Action
+
+The planner includes:
+
+* timeout protection
+* malformed JSON recovery
+* markdown sanitization
+* fallback formatting
+* validation layer
+* audit logging integration
+
+Important:
+
+`/plan` NEVER:
+
+* edits files automatically
+* executes shell commands automatically
+* triggers autonomous execution automatically
 
 ---
 
@@ -46,12 +122,56 @@ Inspired by tools like Claude Code, OpenCode, and modern AI developer workflows.
 ```txt
 src/
  ├── commands/
+ ├── planning/
  ├── context/
  ├── permissions/
  ├── logs/
  ├── providers/
  ├── tools/
  ├── mcp/
+ ├── utils/
+```
+
+---
+
+## Core Runtime Flow
+
+```txt
+User Input
+   ↓
+REPL
+   ↓
+CommandParser
+   ↓
+Commands
+   ↓
+RuntimeContext
+   ↓
+PermissionManager
+   ↓
+ToolExecutor
+   ↓
+AuditLogger
+   ↓
+Providers
+```
+
+---
+
+## Planning Architecture
+
+```txt
+/plan
+   ↓
+Planner
+   ↓
+Validator
+   ↓
+RiskAnalysis
+   ↓
+Formatter
+   ↓
+AuditLogger
 ```
 
 ---
@@ -85,8 +205,9 @@ npm run build
 ## Example Workflow
 
 ```bash
-/generate app.js express server
-/edit app.js add error handling
+/plan build REST API
+/generate api.js express server
+/edit api.js add error handling
 /logs
 ```
 
@@ -101,6 +222,9 @@ npm run build
 * Backup generation
 * Dangerous command blocking
 * Session-level permission caching
+* Timeout protection
+* Graceful fallback handling
+* Validation of malformed AI responses
 
 ---
 
@@ -115,33 +239,39 @@ npm run build
 
 ---
 
+## Current Focus
+
+AI CLI is currently focused on:
+
+* safe AI orchestration
+* workflow-driven tooling
+* runtime observability
+* developer productivity
+* planning-first execution
+* resilient terminal workflows
+
+---
+
 ## Future Goals
 
-* Planning mode
+* Workspace-aware planning
 * Git integration
 * Session persistence
-* Workspace awareness
+* Project summaries
+* Smarter repo awareness
 * Better diff viewer
-* Smarter project context
-* Safer autonomous workflows
+* Safer approval workflows
 
 ---
 
 ## Current Status
 
-AI CLI is currently an advanced local-first AI developer tooling project focused on:
+AI CLI is currently an advanced local-first AI developer tooling project focused on orchestration quality, safety, runtime stability, and developer workflows.
 
-* safe autonomy
-* developer workflows
-* runtime orchestration
-* observability
-* terminal productivity
-
-This project is actively evolving and is not yet production-ready.
+The project is actively evolving and is not yet production-ready.
 
 ---
 
 ## License
 
 MIT
-
