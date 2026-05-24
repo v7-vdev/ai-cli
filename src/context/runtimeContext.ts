@@ -6,6 +6,7 @@ import { AnthropicProvider } from "../providers/anthropic.js";
 import { McpManager } from "../mcp/client.js";
 import { PermissionManager } from "../permissions/permissionManager.js";
 import { AuditLogger } from "../logs/auditLogger.js";
+import { WorkspaceScanner, WorkspaceMetadata } from "../workspace/index.js";
 
 export class RuntimeContext {
     public provider: AIProvider;
@@ -14,6 +15,7 @@ export class RuntimeContext {
     public cwd: string;
     public permissions: PermissionManager;
     public logger: AuditLogger;
+    public workspace?: WorkspaceMetadata;
 
     // A reference to the command parser so commands can dynamically trigger other commands
     // We type it as 'any' or a function to avoid circular dependencies
@@ -61,5 +63,9 @@ export class RuntimeContext {
 
     public async initMcp() {
         await this.mcp.connectAll();
+    }
+
+    public async initWorkspace() {
+        this.workspace = await WorkspaceScanner.scan(this.cwd, this.logger);
     }
 }

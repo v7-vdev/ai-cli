@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Box, Text } from 'ink';
 import TextInput from 'ink-text-input';
+import Spinner from 'ink-spinner';
 import { colors } from '../theme/colors.js';
 import { ChatStatus } from '../hooks/useChat.js';
 
@@ -23,9 +24,17 @@ export function Footer({ status, onSubmit }: FooterProps) {
             case 'idle':
                 return <Text color={colors.success}>Ready</Text>;
             case 'thinking':
-                return <Text color={colors.warning}>Thinking...</Text>;
+                return (
+                    <Text color={colors.warning}>
+                        <Spinner type="dots" /> Thinking...
+                    </Text>
+                );
             case 'executing_tool':
-                return <Text color={colors.info}>Executing Tool...</Text>;
+                return (
+                    <Text color={colors.info}>
+                        <Spinner type="dots" /> Executing Tool...
+                    </Text>
+                );
             case 'error':
                 return <Text color={colors.error}>Error</Text>;
             default:
@@ -33,17 +42,33 @@ export function Footer({ status, onSubmit }: FooterProps) {
         }
     };
 
+    const getCommandHints = () => {
+        switch (status) {
+            case 'idle':
+                return 'Commands: /plan /edit /generate /exit';
+            case 'thinking':
+                return 'AI is generating a response...';
+            case 'executing_tool':
+                return 'Waiting for tool execution to complete...';
+            case 'error':
+                return 'An error occurred. Ready for next input.';
+            default:
+                return '';
+        }
+    };
+
     return (
-        <Box flexDirection="column" borderStyle="single" borderColor={colors.secondary} paddingX={1}>
-            <Box flexDirection="row" justifyContent="space-between">
+        <Box flexDirection="column" borderTop={true} borderStyle="single" borderColor={colors.secondary} paddingX={1} paddingTop={0} paddingBottom={0}>
+            <Box flexDirection="row" justifyContent="space-between" marginBottom={0}>
+                <Box flexDirection="row">
+                    <Text color={colors.secondary}>Status: </Text>
+                    {getStatusDisplay()}
+                </Box>
                 <Text color={colors.secondary}>
-                    Status: {getStatusDisplay()}
-                </Text>
-                <Text color={colors.secondary}>
-                    Commands: /plan /edit /generate /exit
+                    {getCommandHints()}
                 </Text>
             </Box>
-            <Box flexDirection="row" marginTop={1}>
+            <Box flexDirection="row">
                 <Text color={colors.info} bold>You: </Text>
                 {status === 'idle' ? (
                     <TextInput

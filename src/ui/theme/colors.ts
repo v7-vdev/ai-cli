@@ -7,4 +7,6 @@ export const colors = {
     info: '#2196F3',
     text: '#FFFFFF',
     border: '#D97757', // Match primary for borders
+    toolBorder: '#4a4a4a',
+    mutedText: '#666666',
 };

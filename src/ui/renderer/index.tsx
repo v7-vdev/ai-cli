@@ -19,7 +19,10 @@ export async function renderApp() {
     // Provide a basic loading indicator while MCP initializes
     // In Phase 2 this could be moved inside Ink
     const initSpinner = ora("Initializing MCP servers...").start();
-    await ctx.initMcp();
+    await Promise.all([
+        ctx.initMcp(),
+        ctx.initWorkspace()
+    ]);
     initSpinner.succeed(`Connected to ${ctx.mcp.getServers().length} MCP server(s).`);
 
     render(<AppLayout ctx={ctx} toolExecutor={toolExecutor} />);

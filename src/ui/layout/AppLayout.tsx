@@ -1,52 +1,16 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Text, Static, useStdout } from 'ink';
 import { Header } from '../components/Header.js';
 import { Footer } from '../components/Footer.js';
-import { useChat, MessageState } from '../hooks/useChat.js';
+import { useChat } from '../hooks/useChat.js';
 import { RuntimeContext } from '../../context/runtimeContext.js';
 import { ToolExecutor } from '../../tools/executor.js';
 import { colors } from '../theme/colors.js';
+import { MessagePanel } from '../components/MessagePanel.js';
 
 interface AppLayoutProps {
     ctx: RuntimeContext;
     toolExecutor: ToolExecutor;
-}
-
-function MessageItem({ msg }: { msg: MessageState }) {
-    if (msg.role === 'user') {
-        if (msg.functionResponse) {
-            return (
-                <Box marginBottom={1}>
-                    <Text color={colors.secondary}>
-                        [Tool {msg.functionResponse.name} returned]
-                    </Text>
-                </Box>
-            );
-        }
-        return (
-            <Box marginBottom={1}>
-                <Text color={colors.info} bold>You: </Text>
-                <Text>{msg.content}</Text>
-            </Box>
-        );
-    } else if (msg.role === 'model') {
-        if (msg.functionCall) {
-            return (
-                <Box marginBottom={1}>
-                    <Text color={colors.warning}>
-                        [AI calling tool: {msg.functionCall.name}]
-                    </Text>
-                </Box>
-            );
-        }
-        return (
-            <Box marginBottom={1}>
-                <Text color={colors.success} bold>AI: </Text>
-                <Text>{msg.content}</Text>
-            </Box>
-        );
-    }
-    return null;
 }
 
 export function AppLayout({ ctx, toolExecutor }: AppLayoutProps) {
@@ -81,13 +45,13 @@ export function AppLayout({ ctx, toolExecutor }: AppLayoutProps) {
     // It's perfectly safe to pass the entire `messages` array to it!
 
     return (
-        <Box flexDirection="column" minHeight={dimensions.rows} width={dimensions.columns}>
-            <Header model={ctx.provider.constructor.name.replace('Provider', '')} session="Active" />
+        <Box flexDirection="column" minHeight={dimensions.rows} width={dimensions.columns} borderStyle="single" borderColor={colors.primary}>
+            <Header model={ctx.provider.constructor.name.replace('Provider', '')} session="Active" workspace={ctx.workspace} />
             
-            <Box flexGrow={1} flexDirection="column" paddingX={1} paddingTop={1}>
+            <Box flexGrow={1} flexDirection="column" paddingX={0}>
                 <Static items={messages}>
                     {(msg) => (
-                        <MessageItem key={msg.id} msg={msg} />
+                        <MessagePanel key={msg.id} msg={msg} />
                     )}
                 </Static>
                 
