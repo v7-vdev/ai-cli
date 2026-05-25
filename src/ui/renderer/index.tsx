@@ -21,7 +21,8 @@ export async function renderApp() {
     const initSpinner = ora("Initializing MCP servers...").start();
     await Promise.all([
         ctx.initMcp(),
-        ctx.initWorkspace()
+        ctx.initWorkspace(),
+        ctx.initGit()
     ]);
     initSpinner.succeed(`Connected to ${ctx.mcp.getServers().length} MCP server(s).`);
 

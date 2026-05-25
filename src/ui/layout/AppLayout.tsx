@@ -46,7 +46,7 @@ export function AppLayout({ ctx, toolExecutor }: AppLayoutProps) {
 
     return (
         <Box flexDirection="column" minHeight={dimensions.rows} width={dimensions.columns} borderStyle="single" borderColor={colors.primary}>
-            <Header model={ctx.provider.constructor.name.replace('Provider', '')} session="Active" workspace={ctx.workspace} />
+            <Header model={ctx.provider.constructor.name.replace('Provider', '')} session="Active" workspace={ctx.workspace} git={ctx.git} />
             
             <Box flexGrow={1} flexDirection="column" paddingX={0}>
                 <Static items={messages}>

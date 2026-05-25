@@ -14,12 +14,28 @@ Important Folders: ${ctx.workspace.importantFolders.join(', ')}
 `;
         }
 
+        let gitContext = "No Git metadata available.";
+        if (ctx.git && ctx.git.isRepo) {
+            gitContext = `
+Git Repository: Yes
+Repo Root: ${ctx.git.repoRoot || 'Unknown'}
+Current Branch: ${ctx.git.branch}
+Modified Files: ${ctx.git.modifiedFiles.join(', ') || 'None'}
+Staged Files: ${ctx.git.stagedFiles.join(', ') || 'None'}
+Untracked Files: ${ctx.git.untrackedFiles.join(', ') || 'None'}
+`;
+        }
+
         const systemPrompt = `You are an expert technical planning assistant. Analyze the user's task and generate a structured execution plan BEFORE making any changes.
 You MUST tailor your plan to the actual structure of the user's workspace.
 
 === Workspace Context ===
 ${workspaceContext}
 =========================
+
+=== Git Context ===
+${gitContext}
+===================
 
 DO NOT provide markdown text outside of the JSON block. Return ONLY a JSON object with the following schema:
 {

@@ -66,3 +66,11 @@
 [2026-05-24T04:14:51.723Z] [INFO] [WORKSPACE] Starting workspace scan at D:\ai-cli
 [2026-05-24T04:14:51.734Z] [INFO] [WORKSPACE] Scan completed in 11ms. Found 53 files, 2 frameworks.
 [2026-05-24T04:14:51.734Z] [INFO] [PLAN] Starting plan generation for task: test planning
+[2026-05-25T07:11:42.185Z] [INFO] [GIT] Detected repository at: D:/ai-cli
+[2026-05-25T07:11:42.419Z] [INFO] [GIT] Detected repository at: D:/ai-cli
+[2026-05-25T07:11:42.568Z] [WARN] [GIT] Git command failed: git rev-parse --show-toplevel - Command failed: git rev-parse --show-toplevel
+fatal: not a git repository (or any of the parent directories): .git
+
+[2026-05-25T07:11:59.036Z] [INFO] [GIT] Detected repository at: D:/ai-cli
+[2026-05-25T07:12:18.218Z] [INFO] [CONTEXT] Initialized with Groq provider
+[2026-05-25T07:12:18.360Z] [INFO] [GIT] Detected repository at: D:/ai-cli

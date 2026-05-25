@@ -7,6 +7,7 @@ import { McpManager } from "../mcp/client.js";
 import { PermissionManager } from "../permissions/permissionManager.js";
 import { AuditLogger } from "../logs/auditLogger.js";
 import { WorkspaceScanner, WorkspaceMetadata } from "../workspace/index.js";
+import { GitScanner, GitMetadata } from "../git/index.js";
 
 export class RuntimeContext {
     public provider: AIProvider;
@@ -16,6 +17,7 @@ export class RuntimeContext {
     public permissions: PermissionManager;
     public logger: AuditLogger;
     public workspace?: WorkspaceMetadata;
+    public git?: GitMetadata;
 
     // A reference to the command parser so commands can dynamically trigger other commands
     // We type it as 'any' or a function to avoid circular dependencies
@@ -67,5 +69,9 @@ export class RuntimeContext {
 
     public async initWorkspace() {
         this.workspace = await WorkspaceScanner.scan(this.cwd, this.logger);
+    }
+
+    public async initGit() {
+        this.git = await GitScanner.scan(this.cwd, this.logger);
     }
 }
