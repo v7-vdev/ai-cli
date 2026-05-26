@@ -1,8 +1,9 @@
 import { RuntimeContext } from "../context/runtimeContext.js";
 import chalk from "chalk";
+import * as p from "@clack/prompts";
 
 export const modelCommand = {
-    name: "model",
+    name: "/model",
     description: "Manage and switch models for the active provider",
     execute: async (args: string[], ctx: RuntimeContext) => {
         if (args.length === 0) {
@@ -27,10 +28,22 @@ export const modelCommand = {
                 break;
             }
             case "switch": {
-                const modelName = args[1];
+                let modelName = args[1];
                 if (!modelName) {
-                    console.log(chalk.red("Model name required."));
-                    return;
+                    const provider = ctx.registry.getActiveProvider();
+                    const models = provider.getAvailableModels();
+                    const activeModel = ctx.registry.getActiveModel();
+                    
+                    const selected = await p.select({
+                        message: "Select a model to switch to:",
+                        options: models.map(m => ({ 
+                            value: m.value, 
+                            label: m.value === activeModel ? `${m.label} (active)` : m.label 
+                        }))
+                    });
+                    
+                    if (p.isCancel(selected)) return;
+                    modelName = selected as string;
                 }
                 ctx.registry.switchModel(modelName);
                 break;

@@ -13,25 +13,44 @@ export function DiffViewer({ diff, filePath }: DiffViewerProps) {
     const columns = stdout.columns || 80;
 
     return (
-        <Box flexDirection="column" borderStyle="single" borderColor={colors.secondary} padding={1}>
-            <Text color={colors.info} bold>File: {filePath}</Text>
+        <Box flexDirection="column" borderStyle="single" borderColor={colors.secondary} paddingX={1} paddingY={0} backgroundColor="#1a1a1a">
+            <Box borderBottom={true} borderStyle="single" borderColor={colors.secondary} paddingBottom={0} marginBottom={1}>
+                <Text color="white" bold>📝 {filePath}</Text>
+            </Box>
+            
             {diff.isLarge ? (
-                <Text color={colors.warning}>{diff.summary}</Text>
+                <Text color={colors.warning} dimColor>{diff.summary}</Text>
             ) : (
-                <Box flexDirection="column" marginTop={1}>
+                <Box flexDirection="column">
                     {(diff.diffLines || []).map((line, idx) => {
-                        let color = colors.text;
-                        if (line.startsWith('+')) color = colors.success;
-                        else if (line.startsWith('-')) color = colors.error;
-                        else color = colors.mutedText;
+                        const isAdded = line.startsWith('+');
+                        const isRemoved = line.startsWith('-');
+                        
+                        let color = colors.mutedText;
+                        let bgColor: string | undefined = undefined;
+                        let textColor = colors.text;
 
-                        const maxLen = columns - 10;
+                        if (isAdded) {
+                            color = colors.success;
+                            bgColor = '#003300';
+                            textColor = '#88ff88';
+                        } else if (isRemoved) {
+                            color = colors.error;
+                            bgColor = '#330000';
+                            textColor = '#ff8888';
+                        }
+
+                        const maxLen = columns - 6;
                         const isOversized = line.length > maxLen;
                         const displayLine = isOversized 
-                            ? line.substring(0, maxLen - 35) + " ... [LINE EXCEEDS TERMINAL WIDTH]" 
+                            ? line.substring(0, maxLen - 15) + " ... [OVERFLOW]" 
                             : line;
 
-                        return <Text key={idx} color={color}>{displayLine}</Text>;
+                        return (
+                            <Box key={idx} backgroundColor={bgColor} width="100%">
+                                <Text color={textColor}>{displayLine}</Text>
+                            </Box>
+                        );
                     })}
                 </Box>
             )}

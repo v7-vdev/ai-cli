@@ -4,6 +4,7 @@ import { colors } from '../theme/colors.js';
 import { APP_NAME } from '../branding/constants.js';
 import { WorkspaceMetadata } from '../../workspace/index.js';
 import { GitMetadata } from '../../git/index.js';
+import chalk from 'chalk';
 
 interface HeaderProps {
     model: string;
@@ -15,29 +16,34 @@ interface HeaderProps {
 }
 
 export function Header({ model, session, workspace, git, isSafeMode, activeExecutionId }: HeaderProps) {
-    const fwNames = workspace?.frameworks.map(f => f.name).join(' + ') || 'None';
     const workspaceName = workspace?.projectName || 'Scanning...';
 
     return (
-        <Box flexDirection="column" borderBottom={true} borderStyle="single" borderColor={colors.secondary} paddingX={1} paddingBottom={0}>
-            <Box flexDirection="row" justifyContent="space-between">
-                <Box flexDirection="row">
-                    <Text color={colors.primary} bold>{APP_NAME}  </Text>
-                    <Text color={colors.mutedText}>
-                        W: <Text color={colors.text}>{workspaceName}</Text> | M: <Text color={colors.text}>{model}</Text>
-                        {git?.isRepo && (
-                            <Text> | B: <Text color={colors.text}>{git.branch}</Text></Text>
-                        )}
-                        {isSafeMode && (
-                            <Text> | <Text color={colors.info} bold>SAFE MODE</Text></Text>
-                        )}
-                        {activeExecutionId && (
-                            <Text> | Exec: <Text color={colors.warning}>{activeExecutionId}</Text></Text>
-                        )}
-                    </Text>
-                </Box>
-                <Text color={colors.secondary}>Session: {session}</Text>
+        <Box flexDirection="row" justifyContent="space-between" paddingX={1} backgroundColor="white">
+            <Box flexDirection="row">
+                <Text color="black" bold>{APP_NAME} </Text>
+                
+                <Text color="black">
+                    <Text dimColor> W:</Text> <Text bold>{workspaceName}</Text>
+                    <Text dimColor> | M:</Text> <Text bold>{model}</Text>
+                    
+                    {git?.isRepo && (
+                        <Text><Text dimColor> | B:</Text> <Text bold>{git.branch}</Text></Text>
+                    )}
+                    
+                    {isSafeMode && (
+                        <Text><Text dimColor> |</Text> <Text backgroundColor="red" color="white" bold> SAFE MODE </Text></Text>
+                    )}
+                    
+                    {activeExecutionId && (
+                        <Text><Text dimColor> | Exec:</Text> <Text backgroundColor="yellow" color="black" bold> {activeExecutionId} </Text></Text>
+                    )}
+                </Text>
             </Box>
+            
+            <Text color="black">
+                <Text dimColor>Session:</Text> <Text bold>{session}</Text>
+            </Text>
         </Box>
     );
 }

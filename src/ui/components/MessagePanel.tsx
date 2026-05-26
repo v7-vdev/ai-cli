@@ -14,15 +14,25 @@ interface MessagePanelProps {
 }
 
 export function MessagePanel({ msg }: MessagePanelProps) {
+    if (msg.role === 'system') {
+        return (
+            <Box marginY={1} paddingLeft={2} borderLeft={true} borderStyle="single" borderColor={colors.secondary}>
+                <Text color={colors.secondary} dimColor>
+                    {msg.content}
+                </Text>
+            </Box>
+        );
+    }
+
     if (msg.role === 'user') {
         if (msg.functionResponse) {
-            // Tool Execution Panel
+            // Tool Execution Panel (Compact folded look)
             let resultText = typeof msg.functionResponse.response.result === 'string' 
                 ? msg.functionResponse.response.result 
                 : JSON.stringify(msg.functionResponse.response.result);
                 
-            if (resultText.length > 500) {
-                resultText = resultText.substring(0, 500) + '...\n[Output truncated for readability]';
+            if (resultText.length > 300) {
+                resultText = resultText.substring(0, 300) + '... [truncated]';
             }
 
             return (
@@ -34,10 +44,10 @@ export function MessagePanel({ msg }: MessagePanelProps) {
                     marginBottom={1}
                     flexDirection="column"
                 >
-                    <Text color={colors.secondary} bold>
-                        ⚙️ Tool Result: {msg.functionResponse.name}
+                    <Text color={colors.secondary} dimColor>
+                        └─ ⚙️ Tool Result: {msg.functionResponse.name}
                     </Text>
-                    <Text color={colors.mutedText}>
+                    <Text color={colors.mutedText} dimColor>
                         {resultText}
                     </Text>
                 </Box>
@@ -46,7 +56,7 @@ export function MessagePanel({ msg }: MessagePanelProps) {
         
         // Standard User Message
         return (
-            <Box marginBottom={1} flexDirection="row" paddingX={1}>
+            <Box marginBottom={1} flexDirection="row" paddingX={0}>
                 <Text color={colors.info} bold>You: </Text>
                 <Text>{msg.content}</Text>
             </Box>
@@ -56,9 +66,9 @@ export function MessagePanel({ msg }: MessagePanelProps) {
         if (msg.functionCall) {
             // Model Planning/Calling Tool Panel
             return (
-                <Box marginBottom={1} paddingLeft={2} borderLeftColor={colors.warning} borderStyle="single" borderTop={false} borderRight={false} borderBottom={false}>
-                    <Text color={colors.warning}>
-                        [AI planning to call: {msg.functionCall.name}]
+                <Box marginBottom={0} paddingLeft={1} borderLeft={true} borderStyle="single" borderColor={colors.primary}>
+                    <Text color={colors.primary} dimColor>
+                        ┌─ 🤖 AI invokes: {msg.functionCall.name}
                     </Text>
                 </Box>
             );
@@ -75,11 +85,9 @@ export function MessagePanel({ msg }: MessagePanelProps) {
         }, [msg.content]);
 
         return (
-            <Box marginBottom={1} flexDirection="column" paddingX={1}>
-                <Box flexDirection="row">
-                    <Text color={colors.success} bold>AI: </Text>
-                </Box>
-                <Box paddingLeft={2}>
+            <Box marginBottom={1} flexDirection="column" paddingX={0} borderLeft={true} borderStyle="single" borderColor={colors.success} paddingLeft={1}>
+                <Text color={colors.success} bold>AI</Text>
+                <Box>
                     <Text>{parsedContent as string}</Text>
                 </Box>
             </Box>

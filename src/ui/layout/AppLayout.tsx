@@ -70,7 +70,7 @@ export function AppLayout({ ctx, toolExecutor }: AppLayoutProps) {
     if (approvalRequest) timelineState = 'awaiting_approval';
 
     return (
-        <Box flexDirection="column" minHeight={dimensions.rows} width={dimensions.columns} borderStyle="single" borderColor={colors.primary}>
+        <Box flexDirection="column" minHeight={dimensions.rows} width={dimensions.columns}>
             <Header 
                 model={ctx.provider.constructor.name.replace('Provider', '')} 
                 session="Active" 
@@ -81,25 +81,27 @@ export function AppLayout({ ctx, toolExecutor }: AppLayoutProps) {
             />
             
             <ErrorBoundary onCrash={() => ctx.pipeline.recoverFromCrash()}>
-                <Box flexGrow={1} flexDirection="column" paddingX={0}>
+                <Box flexGrow={1} flexDirection="column" paddingX={1} paddingTop={1}>
                     <Static items={messages}>
                         {(msg) => (
                             <MessagePanel key={msg.id} msg={msg} />
                         )}
                     </Static>
                     
-                    <ExecutionTimeline state={timelineState} />
+                    <Box flexDirection="column" marginTop={1}>
+                        <ExecutionTimeline state={timelineState} />
 
-                    {approvalRequest && (
-                        <ApprovalPanel request={approvalRequest} />
-                    )}
-                    
-                    {error && (
-                        <Box marginTop={1}>
-                            <Text color={colors.error} bold>Error: </Text>
-                            <Text color={colors.error}>{error}</Text>
-                        </Box>
-                    )}
+                        {approvalRequest && (
+                            <ApprovalPanel request={approvalRequest} />
+                        )}
+                        
+                        {error && (
+                            <Box marginTop={1} padding={1} borderStyle="single" borderColor={colors.error}>
+                                <Text color={colors.error} bold>Error: </Text>
+                                <Text color={colors.error}>{error}</Text>
+                            </Box>
+                        )}
+                    </Box>
                 </Box>
             </ErrorBoundary>
 

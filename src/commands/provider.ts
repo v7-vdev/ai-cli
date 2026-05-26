@@ -4,7 +4,7 @@ import { KeyManager } from "../security/keys.js";
 import * as p from "@clack/prompts";
 
 export const providerCommand = {
-    name: "provider",
+    name: "/provider",
     description: "Manage AI providers and BYOK credentials",
     execute: async (args: string[], ctx: RuntimeContext) => {
         if (args.length === 0) {
@@ -17,28 +17,44 @@ export const providerCommand = {
 
         switch (action) {
             case "add": {
-                if (!providerId) {
-                    console.log(chalk.red("Provider ID required. (e.g. /provider add openrouter)"));
-                    return;
+                let targetId = providerId;
+                if (!targetId) {
+                    const supported = ctx.registry.getSupportedProviders();
+                    const selected = await p.select({
+                        message: "Select a provider to add:",
+                        options: supported.map(id => ({ value: id, label: id }))
+                    });
+                    if (p.isCancel(selected)) return;
+                    targetId = selected as string;
                 }
                 const key = await p.password({
-                    message: `Enter API Key for ${providerId}:`,
+                    message: `Enter API Key for ${targetId}:`,
                 });
-                if (typeof key !== 'symbol' && key) {
-                    KeyManager.setKey(providerId, key as string);
-                    console.log(chalk.green(`✓ Safely encrypted and stored key for ${providerId}`));
+                if (!p.isCancel(key) && key) {
+                    KeyManager.setKey(targetId, key as string);
+                    console.log(chalk.green(`✓ Safely encrypted and stored key for ${targetId}`));
                 } else {
                     console.log(chalk.yellow("Aborted."));
                 }
                 break;
             }
             case "remove": {
-                if (!providerId) {
-                    console.log(chalk.red("Provider ID required."));
-                    return;
+                let targetId = providerId;
+                if (!targetId) {
+                    const configured = KeyManager.listConfiguredProviders();
+                    if (configured.length === 0) {
+                        console.log(chalk.yellow("No BYOK providers configured."));
+                        return;
+                    }
+                    const selected = await p.select({
+                        message: "Select a provider to remove:",
+                        options: configured.map(id => ({ value: id, label: id }))
+                    });
+                    if (p.isCancel(selected)) return;
+                    targetId = selected as string;
                 }
-                KeyManager.removeKey(providerId);
-                console.log(chalk.green(`✓ Removed key for ${providerId}`));
+                KeyManager.removeKey(targetId);
+                console.log(chalk.green(`✓ Removed key for ${targetId}`));
                 break;
             }
             case "list": {
@@ -47,32 +63,48 @@ export const providerCommand = {
                 const active = ctx.registry.getActiveProviderId();
                 
                 console.log(chalk.cyan("\nProviders:"));
-                for (const p of supported) {
+                for (const provider of supported) {
                     let status = "Not Configured";
-                    if (configured.includes(p)) status = chalk.green("Configured (BYOK)");
-                    if (process.env[`${p.toUpperCase()}_API_KEY`]) status = chalk.blue("Configured (ENV)");
+                    if (configured.includes(provider)) status = chalk.green("Configured (BYOK)");
+                    if (process.env[`${provider.toUpperCase()}_API_KEY`]) status = chalk.blue("Configured (ENV)");
                     
-                    const prefix = p === active ? chalk.green("→ ") : "  ";
-                    console.log(`${prefix}${p.padEnd(15)} [${status}]`);
+                    const prefix = provider === active ? chalk.green("→ ") : "  ";
+                    console.log(`${prefix}${provider.padEnd(15)} [${status}]`);
                 }
                 console.log("");
                 break;
             }
             case "switch": {
-                if (!providerId) {
-                    console.log(chalk.red("Provider ID required."));
-                    return;
+                let targetId = providerId;
+                if (!targetId) {
+                    const supported = ctx.registry.getSupportedProviders();
+                    const active = ctx.registry.getActiveProviderId();
+                    const selected = await p.select({
+                        message: "Select a provider to switch to:",
+                        options: supported.map(id => ({ 
+                            value: id, 
+                            label: id === active ? `${id} (active)` : id 
+                        }))
+                    });
+                    if (p.isCancel(selected)) return;
+                    targetId = selected as string;
                 }
                 try {
                     // Check if local inference URL is provided
                     if (args[2]) {
-                        ctx.registry.setLocalEndpoint(providerId, args[2]);
-                        console.log(chalk.gray(`Set local endpoint for ${providerId} to ${args[2]}`));
+                        ctx.registry.setLocalEndpoint(targetId, args[2]);
+                        console.log(chalk.gray(`Set local endpoint for ${targetId} to ${args[2]}`));
                     }
-                    ctx.registry.switchProvider(providerId);
+                    ctx.registry.switchProvider(targetId);
                     // Clear history to avoid cross-contamination of system prompt behaviors
                     ctx.clearHistory(); 
-                    console.log(chalk.gray("History cleared for clean provider session."));
+                    
+                    const activeP = ctx.registry.getActiveProvider();
+                    const m = activeP.getMetadata();
+                    const snapshot = `**Switched to ${m.name}**\n- Streaming: ${m.capabilities.supportsStreaming ? 'enabled' : 'disabled'}\n- Tools: ${m.capabilities.supportsTools ? 'enabled' : 'disabled'}\n- Reasoning: ${m.capabilities.supportsReasoning ? 'enabled' : 'disabled'}\n- Context Window: ${Math.floor(m.capabilities.contextWindow / 1024)}k`;
+                    
+                    ctx.addMessage({ role: 'system', content: snapshot });
+                    console.log(chalk.gray("History cleared for clean provider session. Capability snapshot appended to context."));
                 } catch (e: any) {
                     console.log(chalk.red(`Switch failed: ${e.message}`));
                 }

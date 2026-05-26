@@ -42,7 +42,7 @@ export class ProviderRegistry {
             id: "groq",
             name: "Groq",
             baseURL: "https://api.groq.com/openai/v1",
-            defaultModel: "llama3-8b-8192",
+            defaultModel: "llama-3.1-8b-instant",
             capabilities: {
                 supportsStreaming: true,
                 supportsTools: true,
