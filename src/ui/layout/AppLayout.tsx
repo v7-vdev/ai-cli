@@ -104,7 +104,7 @@ export function AppLayout({ ctx, toolExecutor }: AppLayoutProps) {
     if (approvalRequest) timelineState = 'awaiting_approval';
 
     return (
-        <Box flexDirection="column" minHeight={dimensions.rows} width={dimensions.columns}>
+        <Box flexDirection="column" width="100%">
             <Header 
                 model={ctx.provider.constructor.name.replace('Provider', '')} 
                 session="Active" 

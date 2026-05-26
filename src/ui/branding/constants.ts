@@ -1,2 +1,2 @@
-export const APP_NAME = "AI CLI";
-export const APP_SUBTITLE = "Terminal-first AI developer runtime";
+export const APP_NAME = "ORK";
+export const APP_SUBTITLE = "Trust-Oriented Orchestration Runtime";
