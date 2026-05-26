@@ -8,6 +8,7 @@ import { PermissionManager } from "../permissions/permissionManager.js";
 import { AuditLogger } from "../logs/auditLogger.js";
 import { WorkspaceScanner, WorkspaceMetadata } from "../workspace/index.js";
 import { GitScanner, GitMetadata } from "../git/index.js";
+import { ExecutionPipeline } from "../execution/pipeline.js";
 
 export class RuntimeContext {
     public provider: AIProvider;
@@ -18,6 +19,7 @@ export class RuntimeContext {
     public logger: AuditLogger;
     public workspace?: WorkspaceMetadata;
     public git?: GitMetadata;
+    public pipeline: ExecutionPipeline;
 
     // A reference to the command parser so commands can dynamically trigger other commands
     // We type it as 'any' or a function to avoid circular dependencies
@@ -29,6 +31,7 @@ export class RuntimeContext {
         this.logger = new AuditLogger();
         this.permissions = new PermissionManager(this.logger);
         this.cwd = process.cwd();
+        this.pipeline = new ExecutionPipeline(this);
         
         if (process.env.ANTHROPIC_API_KEY) {
             this.provider = new AnthropicProvider();

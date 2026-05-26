@@ -10,9 +10,11 @@ interface HeaderProps {
     session: string;
     workspace?: WorkspaceMetadata | undefined;
     git?: GitMetadata | undefined;
+    isSafeMode?: boolean;
+    activeExecutionId?: string | null | undefined;
 }
 
-export function Header({ model, session, workspace, git }: HeaderProps) {
+export function Header({ model, session, workspace, git, isSafeMode, activeExecutionId }: HeaderProps) {
     const fwNames = workspace?.frameworks.map(f => f.name).join(' + ') || 'None';
     const workspaceName = workspace?.projectName || 'Scanning...';
 
@@ -22,9 +24,15 @@ export function Header({ model, session, workspace, git }: HeaderProps) {
                 <Box flexDirection="row">
                     <Text color={colors.primary} bold>{APP_NAME}  </Text>
                     <Text color={colors.mutedText}>
-                        Workspace: <Text color={colors.text}>{workspaceName}</Text> | Framework: <Text color={colors.text}>{fwNames}</Text> | Provider: <Text color={colors.text}>{model}</Text>
+                        W: <Text color={colors.text}>{workspaceName}</Text> | M: <Text color={colors.text}>{model}</Text>
                         {git?.isRepo && (
-                            <Text> | Branch: <Text color={colors.text}>{git.branch}</Text> | Modified: <Text color={colors.text}>{git.modifiedFiles.length}</Text> files</Text>
+                            <Text> | B: <Text color={colors.text}>{git.branch}</Text></Text>
+                        )}
+                        {isSafeMode && (
+                            <Text> | <Text color={colors.info} bold>SAFE MODE</Text></Text>
+                        )}
+                        {activeExecutionId && (
+                            <Text> | Exec: <Text color={colors.warning}>{activeExecutionId}</Text></Text>
                         )}
                     </Text>
                 </Box>

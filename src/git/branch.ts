@@ -3,7 +3,8 @@ import { execGit, GitExecOptions } from "./exec.js";
 export async function getCurrentBranch(options: GitExecOptions): Promise<string | null> {
     try {
         const { stdout } = await execGit(["branch", "--show-current"], options);
-        return stdout || null;
+        if (!stdout) return null;
+        return stdout.replace(/[^a-zA-Z0-9/\-_.]/g, '');
     } catch {
         return null;
     }

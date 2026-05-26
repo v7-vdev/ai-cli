@@ -46,15 +46,13 @@ export class AuditLogger {
     }
 
     private redact(message: string): string {
-        // Redact anything that looks like an API key or env var assignment
         let redacted = message;
-        // Match sk-..., gsk_..., etc.
         redacted = redacted.replace(/(sk-[a-zA-Z0-9]{20,})/g, "[REDACTED_API_KEY]");
         redacted = redacted.replace(/(gsk_[a-zA-Z0-9]{20,})/g, "[REDACTED_API_KEY]");
         return redacted;
     }
 
-    public log(level: LogLevel, context: string, message: string) {
+    public log(level: LogLevel, context: string, message: string, executionId?: string) {
         try {
             const redactedMessage = this.redact(message);
             const duplicateKey = `${level}:${context}:${redactedMessage}`;
@@ -71,7 +69,6 @@ export class AuditLogger {
                 this.lastLogMap.set(duplicateKey, { timestamp: now, count: 1 });
             }
 
-            // Cleanup old keys occasionally
             if (this.lastLogMap.size > 100) {
                 const threshold = now - this.DUPLICATE_SPAM_WINDOW_MS;
                 for (const [k, v] of this.lastLogMap.entries()) {
@@ -82,7 +79,8 @@ export class AuditLogger {
             }
 
             const timestampStr = new Date().toISOString();
-            const logEntry = `[${timestampStr}] [${level}] [${context}] ${redactedMessage}\n`;
+            const execIdStr = executionId ? `[${executionId}] ` : "";
+            const logEntry = `[${timestampStr}] [${level}] [${context}] ${execIdStr}${redactedMessage}\n`;
             
             this.writeQueue.push(logEntry);
             this.processQueue();
@@ -100,7 +98,7 @@ export class AuditLogger {
             this.writeQueue = [];
             const data = entries.join("");
             
-            await fs.promises.appendFile(this.logFilePath, data, "utf8");
+            await fs.promises.appendFile(this.logFilePath, data, { encoding: "utf8", flag: "a" });
         } catch (err) {
             // fail silently
         } finally {

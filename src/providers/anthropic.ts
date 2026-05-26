@@ -117,4 +117,13 @@ export class AnthropicProvider implements AIProvider {
             { value: "claude-3-5-haiku-20241022", label: "Claude 3.5 Haiku" }
         ];
     }
+
+    getMetadata() {
+        return {
+            name: "Anthropic",
+            fastInference: false,
+            contextWindowSize: 200000,
+            supportsToolExecution: true
+        };
+    }
 }

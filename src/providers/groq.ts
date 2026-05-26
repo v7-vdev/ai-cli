@@ -93,10 +93,19 @@ export class GroqProvider implements AIProvider {
 
     getAvailableModels(): { value: string; label: string; }[] {
         return [
-            { value: "llama-3.3-70b-versatile", label: "Llama 3.3 70B Versatile" },
-            { value: "llama-3.1-8b-instant", label: "Llama 3.1 8B Instant" },
+            { value: "llama-3.3-70b-versatile", label: "Llama 3.3 70B" },
+            { value: "deepseek-r1-distill-llama-70b", label: "Deepseek R1 Llama 70B" },
             { value: "gemma2-9b-it", label: "Gemma 2 9B IT" },
             { value: "mixtral-8x7b-32768", label: "Mixtral 8x7B" }
         ];
+    }
+
+    getMetadata() {
+        return {
+            name: "Groq",
+            fastInference: true,
+            contextWindowSize: 32000,
+            supportsToolExecution: true
+        };
     }
 }

@@ -1,6 +1,6 @@
 export type RiskLevel = "low" | "medium" | "high" | "critical";
 
-export interface Risk {
+interface Risk {
     description: string;
     level: RiskLevel;
 }

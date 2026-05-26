@@ -7,6 +7,10 @@ import { RuntimeContext } from '../../context/runtimeContext.js';
 import { ToolExecutor } from '../../tools/executor.js';
 import { colors } from '../theme/colors.js';
 import { MessagePanel } from '../components/MessagePanel.js';
+import { ApprovalPanel } from '../components/ApprovalPanel.js';
+import { ExecutionTimeline, ExecutionState } from '../components/ExecutionTimeline.js';
+import { ApprovalRequest } from '../../execution/pipeline.js';
+import { ErrorBoundary } from '../components/ErrorBoundary.js';
 
 interface AppLayoutProps {
     ctx: RuntimeContext;
@@ -20,6 +24,22 @@ export function AppLayout({ ctx, toolExecutor }: AppLayoutProps) {
         columns: stdout.columns,
         rows: stdout.rows
     });
+    const [approvalRequest, setApprovalRequest] = useState<ApprovalRequest | null>(null);
+
+    useEffect(() => {
+        const handler = (req: ApprovalRequest) => {
+            setApprovalRequest(req);
+            const originalResolve = req.resolve;
+            req.resolve = (approved) => {
+                setApprovalRequest(null);
+                originalResolve(approved);
+            };
+        };
+        ctx.pipeline.setApprovalHandler(handler);
+        return () => {
+            ctx.pipeline.setApprovalHandler(() => {});
+        };
+    }, [ctx]);
 
     useEffect(() => {
         const onResize = () => {
@@ -44,24 +64,44 @@ export function AppLayout({ ctx, toolExecutor }: AppLayoutProps) {
     // and it will only render the items that were added since the last render.
     // It's perfectly safe to pass the entire `messages` array to it!
 
+    let timelineState: ExecutionState = 'idle';
+    if (status === 'thinking') timelineState = 'thinking';
+    else if (status === 'executing_tool') timelineState = 'executing_tool';
+    if (approvalRequest) timelineState = 'awaiting_approval';
+
     return (
         <Box flexDirection="column" minHeight={dimensions.rows} width={dimensions.columns} borderStyle="single" borderColor={colors.primary}>
-            <Header model={ctx.provider.constructor.name.replace('Provider', '')} session="Active" workspace={ctx.workspace} git={ctx.git} />
+            <Header 
+                model={ctx.provider.constructor.name.replace('Provider', '')} 
+                session="Active" 
+                workspace={ctx.workspace} 
+                git={ctx.git} 
+                isSafeMode={ctx.pipeline.isSafeMode}
+                activeExecutionId={approvalRequest?.executionId ?? undefined}
+            />
             
-            <Box flexGrow={1} flexDirection="column" paddingX={0}>
-                <Static items={messages}>
-                    {(msg) => (
-                        <MessagePanel key={msg.id} msg={msg} />
+            <ErrorBoundary onCrash={() => ctx.pipeline.recoverFromCrash()}>
+                <Box flexGrow={1} flexDirection="column" paddingX={0}>
+                    <Static items={messages}>
+                        {(msg) => (
+                            <MessagePanel key={msg.id} msg={msg} />
+                        )}
+                    </Static>
+                    
+                    <ExecutionTimeline state={timelineState} />
+
+                    {approvalRequest && (
+                        <ApprovalPanel request={approvalRequest} />
                     )}
-                </Static>
-                
-                {error && (
-                    <Box marginTop={1}>
-                        <Text color={colors.error} bold>Error: </Text>
-                        <Text color={colors.error}>{error}</Text>
-                    </Box>
-                )}
-            </Box>
+                    
+                    {error && (
+                        <Box marginTop={1}>
+                            <Text color={colors.error} bold>Error: </Text>
+                            <Text color={colors.error}>{error}</Text>
+                        </Box>
+                    )}
+                </Box>
+            </ErrorBoundary>
 
             <Footer status={status} onSubmit={sendMessage} />
         </Box>

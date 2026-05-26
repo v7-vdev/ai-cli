@@ -15,8 +15,6 @@
   "license": "ISC",
   "type": "module",
   "devDependencies": {
-    "@types/diff": "^7.0.2",
-    "@types/figlet": "^1.7.0",
     "@types/marked-terminal": "^6.1.1",
     "@types/node": "^25.9.1",
     "@types/react": "^19.2.15",
@@ -32,7 +30,6 @@
     "chalk": "^5.6.2",
     "diff": "^9.0.0",
     "dotenv": "^17.4.2",
-    "figlet": "^1.11.0",
     "ink": "^7.0.3",
     "ink-spinner": "^5.0.0",
     "ink-text-input": "^6.0.0",

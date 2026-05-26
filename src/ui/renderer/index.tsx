@@ -6,7 +6,7 @@ import { RuntimeContext } from '../../context/runtimeContext.js';
 import { ToolExecutor } from '../../tools/executor.js';
 import { CommandParser } from '../../utils/commandParser.js';
 
-export async function renderApp() {
+export async function renderApp(isDryRun: boolean = false) {
     console.clear();
     
     // Initialize exactly as REPL does
@@ -14,6 +14,8 @@ export async function renderApp() {
     const ctx: RuntimeContext = new RuntimeContext(async (input: string) => {
         return await commandParser.execute(input, ctx);
     });
+    ctx.pipeline.isDryRun = isDryRun;
+    
     const toolExecutor = new ToolExecutor(ctx);
 
     // Provide a basic loading indicator while MCP initializes

@@ -83,9 +83,17 @@ export class GeminiProvider implements AIProvider {
 
     getAvailableModels(): { value: string; label: string; }[] {
         return [
-            { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" },
-            { value: "gemini-2.0-pro-exp-02-05", label: "Gemini 2.0 Pro Experimental" },
-            { value: "gemini-1.5-pro", label: "Gemini 1.5 Pro" }
+            { value: "gemini-2.5-pro", label: "Gemini 2.5 Pro" },
+            { value: "gemini-2.5-flash", label: "Gemini 2.5 Flash" }
         ];
+    }
+
+    getMetadata() {
+        return {
+            name: "Gemini",
+            fastInference: this.model.includes('flash'),
+            contextWindowSize: 1000000,
+            supportsToolExecution: true
+        };
     }
 }
