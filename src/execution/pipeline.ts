@@ -19,14 +19,27 @@ export interface ApprovalRequest {
 }
 
 export class ExecutionPipeline {
-    public isDryRun: boolean = false;
-    public isSafeMode: boolean = false;
     private ctx: RuntimeContext;
+    private _isDryRun: boolean = false;
+    public isSafeMode: boolean = false;
+    private aborted: boolean = false;
     private approvalHandler?: (request: ApprovalRequest) => void;
     private approvalQueue = new ApprovalQueue();
 
     constructor(ctx: RuntimeContext) {
         this.ctx = ctx;
+    }
+
+    public get isDryRun(): boolean {
+        return this._isDryRun;
+    }
+
+    public set isDryRun(value: boolean) {
+        this._isDryRun = value;
+    }
+
+    public abort() {
+        this.aborted = true;
     }
 
     public setApprovalHandler(handler: (request: ApprovalRequest) => void) {
