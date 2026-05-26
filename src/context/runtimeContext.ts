@@ -23,6 +23,10 @@ export class RuntimeContext {
     // We type it as 'any' or a function to avoid circular dependencies
     public executeCommand: (input: string) => Promise<boolean>;
 
+    // Interactive UI Handlers
+    public requestMenuSelection?: (message: string, options: { label: string, value: string }[]) => Promise<string | null>;
+    public requestTextInput?: (message: string, placeholder?: string) => Promise<string | null>;
+
     constructor(executeCommand: (input: string) => Promise<boolean>) {
         this.executeCommand = executeCommand;
         this.mcp = new McpManager();

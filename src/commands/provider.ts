@@ -77,16 +77,14 @@ export const providerCommand = {
             case "switch": {
                 let targetId = providerId;
                 if (!targetId) {
+                    if (!ctx.requestMenuSelection) return;
                     const supported = ctx.registry.getSupportedProviders();
                     const active = ctx.registry.getActiveProviderId();
-                    const selected = await p.select({
-                        message: "Select a provider to switch to:",
-                        options: supported.map(id => ({ 
-                            value: id, 
-                            label: id === active ? `${id} (active)` : id 
-                        }))
-                    });
-                    if (p.isCancel(selected)) return;
+                    const selected = await ctx.requestMenuSelection("Select a provider to switch to:", supported.map(id => ({ 
+                        value: id, 
+                        label: id === active ? `${id} (active)` : id 
+                    })));
+                    if (!selected) return;
                     targetId = selected as string;
                 }
                 try {

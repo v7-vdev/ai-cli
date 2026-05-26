@@ -11,6 +11,8 @@ import { ApprovalPanel } from '../components/ApprovalPanel.js';
 import { ExecutionTimeline, ExecutionState } from '../components/ExecutionTimeline.js';
 import { ApprovalRequest } from '../../execution/pipeline.js';
 import { ErrorBoundary } from '../components/ErrorBoundary.js';
+import { MenuPanel } from '../components/MenuPanel.js';
+import { InputPanel } from '../components/InputPanel.js';
 
 interface AppLayoutProps {
     ctx: RuntimeContext;
@@ -38,6 +40,38 @@ export function AppLayout({ ctx, toolExecutor }: AppLayoutProps) {
         ctx.pipeline.setApprovalHandler(handler);
         return () => {
             ctx.pipeline.setApprovalHandler(() => {});
+        };
+    }, [ctx]);
+
+    const [menuRequest, setMenuRequest] = useState<{ message: string, options: any[], resolve: (val: string | null) => void } | null>(null);
+    const [inputRequest, setInputRequest] = useState<{ message: string, placeholder?: string, resolve: (val: string | null) => void } | null>(null);
+
+    useEffect(() => {
+        ctx.requestMenuSelection = (message, options) => {
+            return new Promise((resolve) => {
+                setMenuRequest({ message, options, resolve: (val) => {
+                    setMenuRequest(null);
+                    resolve(val);
+                }});
+            });
+        };
+
+        ctx.requestTextInput = (message, placeholder) => {
+            return new Promise((resolve) => {
+                const req: any = { message, resolve: (val: string | null) => {
+                    setInputRequest(null);
+                    resolve(val);
+                }};
+                if (placeholder !== undefined) {
+                    req.placeholder = placeholder;
+                }
+                setInputRequest(req);
+            });
+        };
+
+        return () => {
+            delete (ctx as any).requestMenuSelection;
+            delete (ctx as any).requestTextInput;
         };
     }, [ctx]);
 
@@ -93,6 +127,18 @@ export function AppLayout({ ctx, toolExecutor }: AppLayoutProps) {
 
                         {approvalRequest && (
                             <ApprovalPanel request={approvalRequest} />
+                        )}
+
+                        {menuRequest && (
+                            <MenuPanel message={menuRequest.message} options={menuRequest.options} onSelect={menuRequest.resolve} />
+                        )}
+
+                        {inputRequest && (
+                            <InputPanel 
+                                message={inputRequest.message} 
+                                {...(inputRequest.placeholder ? { placeholder: inputRequest.placeholder } : {})} 
+                                onSubmit={inputRequest.resolve} 
+                            />
                         )}
                         
                         {error && (

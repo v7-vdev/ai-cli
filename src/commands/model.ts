@@ -1,56 +1,43 @@
+import { Command } from "./command.js";
 import { RuntimeContext } from "../context/runtimeContext.js";
 import chalk from "chalk";
-import * as p from "@clack/prompts";
 
-export const modelCommand = {
+export const modelCommand: Command = {
     name: "/model",
-    description: "Manage and switch models for the active provider",
+    description: "Manage AI models (switch)",
     execute: async (args: string[], ctx: RuntimeContext) => {
-        if (args.length === 0) {
-            console.log(chalk.yellow("Usage: /model <list|switch> [modelName]"));
-            return;
-        }
+        const action = args[0] || "switch";
+        
+        if (action === "switch") {
+            let targetModel = args[1];
+            
+            if (!targetModel) {
+                if (!ctx.requestMenuSelection) {
+                    console.log(chalk.yellow("Usage: /model switch <model_name>"));
+                    return;
+                }
 
-        const action = args[0];
-
-        switch (action) {
-            case "list": {
                 const provider = ctx.registry.getActiveProvider();
-                const activeModel = ctx.registry.getActiveModel();
                 const models = provider.getAvailableModels();
+
+                const selected = await ctx.requestMenuSelection("Select a model:", 
+                    models.map((m: any) => ({ value: m.value, label: m.label }))
+                );
                 
-                console.log(chalk.cyan(`\nAvailable Models for ${ctx.registry.getActiveProviderId()}:`));
-                for (const m of models) {
-                    const prefix = m.value === activeModel ? chalk.green("→ ") : "  ";
-                    console.log(`${prefix}${m.label} (${m.value})`);
+                if (!selected) return;
+                targetModel = selected;
+            }
+
+            if (targetModel) {
+                try {
+                    ctx.registry.switchModel(targetModel);
+                    console.log(chalk.green(`Successfully switched to model: ${targetModel}`));
+                } catch (e: any) {
+                    console.log(chalk.red(`Switch failed: ${e.message}`));
                 }
-                console.log("");
-                break;
             }
-            case "switch": {
-                let modelName = args[1];
-                if (!modelName) {
-                    const provider = ctx.registry.getActiveProvider();
-                    const models = provider.getAvailableModels();
-                    const activeModel = ctx.registry.getActiveModel();
-                    
-                    const selected = await p.select({
-                        message: "Select a model to switch to:",
-                        options: models.map(m => ({ 
-                            value: m.value, 
-                            label: m.value === activeModel ? `${m.label} (active)` : m.label 
-                        }))
-                    });
-                    
-                    if (p.isCancel(selected)) return;
-                    modelName = selected as string;
-                }
-                ctx.registry.switchModel(modelName);
-                break;
-            }
-            default: {
-                console.log(chalk.red(`Unknown action: ${action}`));
-            }
+        } else {
+            console.log(chalk.yellow("Unknown action. Available: switch"));
         }
     }
 };
