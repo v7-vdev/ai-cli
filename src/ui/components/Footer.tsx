@@ -26,23 +26,23 @@ export function Footer({ status, providerName, isSafeMode, hasApproval, hasMenu,
     const getStatusDisplay = () => {
         switch (status) {
             case 'idle':
-                return <Text color={colors.success}>Ready</Text>;
+                return <Text color={colors.secondary} dimColor>Ready</Text>;
             case 'thinking':
                 return (
-                    <Text color={colors.warning}>
-                        <Spinner type="dots" /> Thinking...
+                    <Text color={colors.secondary} dimColor>
+                        <Spinner type="dots" /> Planning execution...
                     </Text>
                 );
             case 'executing_tool':
                 return (
-                    <Text color={colors.info}>
-                        <Spinner type="dots" /> Executing...
+                    <Text color={colors.secondary} dimColor>
+                        <Spinner type="dots" /> Streaming response...
                     </Text>
                 );
             case 'error':
-                return <Text color={colors.error}>Error</Text>;
+                return <Text color={colors.error} dimColor>Error</Text>;
             default:
-                return <Text>{status}</Text>;
+                return <Text color={colors.secondary} dimColor>{status}</Text>;
         }
     };
 
@@ -71,9 +71,6 @@ export function Footer({ status, providerName, isSafeMode, hasApproval, hasMenu,
                 <Box flexDirection="row">
                     <Text color={colors.secondary} dimColor>Status: </Text>
                     {getStatusDisplay()}
-                    <Text color={colors.secondary} dimColor>  |  Provider: </Text>
-                    <Text color={colors.secondary} bold>{providerName}</Text>
-                    {isSafeMode && <Text color={colors.warning} dimColor>  |  Mode: SAFE</Text>}
                 </Box>
                 <Text color={colors.secondary} dimColor>
                     {getCommandHints()}

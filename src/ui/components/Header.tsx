@@ -27,11 +27,11 @@ export function Header({ model, session, workspace, git, isSafeMode, activeExecu
         <Box flexDirection="column" paddingX={1} paddingTop={0} paddingBottom={0} marginBottom={1}>
             <Text dimColor>
                 <Text bold>{APP_NAME}</Text>
-                <Text> | W: {workspaceName}</Text>
-                <Text> | M: {model}</Text>
+                <Text> | {workspaceName}</Text>
+                <Text> | {model}</Text>
                 
                 {git?.isRepo && (
-                    <Text> | B: {git.branch}</Text>
+                    <Text> | {git.branch}</Text>
                 )}
                 
                 {isSafeMode && (
@@ -41,8 +41,6 @@ export function Header({ model, session, workspace, git, isSafeMode, activeExecu
                 {activeExecutionId && (
                     <Text color="yellow"> | Exec: {activeExecutionId}</Text>
                 )}
-
-                <Text> | Session: {session}</Text>
             </Text>
             
             {/* Subtle Operational Presence */}
