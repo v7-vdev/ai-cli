@@ -58,7 +58,7 @@ export function Footer({ status, onSubmit }: FooterProps) {
     };
 
     return (
-        <Box flexDirection="column" borderTop={true} borderStyle="single" borderColor={colors.secondary} paddingX={1} paddingTop={0} paddingBottom={0}>
+        <Box flexDirection="column" borderTop={true} borderStyle="single" borderColor={status === 'idle' ? colors.toolBorder : colors.secondary} paddingX={1} paddingTop={0} paddingBottom={0}>
             <Box flexDirection="row" justifyContent="space-between" marginBottom={0}>
                 <Box flexDirection="row">
                     <Text color={colors.secondary}>Status: </Text>
@@ -68,8 +68,12 @@ export function Footer({ status, onSubmit }: FooterProps) {
                     {getCommandHints()}
                 </Text>
             </Box>
-            <Box flexDirection="row">
-                <Text color={colors.info} bold>You: </Text>
+            <Box flexDirection="row" marginTop={0}>
+                {status === 'idle' ? (
+                    <Text color={colors.primary} bold>❯ </Text>
+                ) : (
+                    <Text color={colors.secondary} dimColor>❯ </Text>
+                )}
                 {status === 'idle' ? (
                     <TextInput
                         value={inputValue}
@@ -78,7 +82,7 @@ export function Footer({ status, onSubmit }: FooterProps) {
                         placeholder="Ask something or type a command..."
                     />
                 ) : (
-                    <Text color={colors.secondary}>{inputValue || '...'}</Text>
+                    <Text color={colors.secondary} dimColor>{inputValue || '...'}</Text>
                 )}
             </Box>
         </Box>

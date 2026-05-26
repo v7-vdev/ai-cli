@@ -15,8 +15,13 @@ interface MessagePanelProps {
 
 export function MessagePanel({ msg }: MessagePanelProps) {
     if (msg.role === 'system') {
+        // Suppress massive internal onboarding system prompts
+        if (msg.content?.includes("You are an expert AI Coding Assistant")) {
+            return null;
+        }
+        
         return (
-            <Box marginY={1} paddingLeft={2} borderLeft={true} borderStyle="single" borderColor={colors.secondary}>
+            <Box marginY={0} paddingLeft={1} borderLeft={true} borderStyle="single" borderColor={colors.secondary}>
                 <Text color={colors.secondary} dimColor>
                     {msg.content}
                 </Text>
@@ -31,8 +36,8 @@ export function MessagePanel({ msg }: MessagePanelProps) {
                 ? msg.functionResponse.response.result 
                 : JSON.stringify(msg.functionResponse.response.result);
                 
-            if (resultText.length > 300) {
-                resultText = resultText.substring(0, 300) + '... [truncated]';
+            if (resultText.length > 200) {
+                resultText = resultText.substring(0, 200) + '... [truncated]';
             }
 
             return (
@@ -41,7 +46,7 @@ export function MessagePanel({ msg }: MessagePanelProps) {
                     borderStyle="single"
                     borderColor={colors.toolBorder} 
                     paddingLeft={1} 
-                    marginBottom={1}
+                    marginBottom={0}
                     flexDirection="column"
                 >
                     <Text color={colors.secondary} dimColor>
@@ -56,8 +61,8 @@ export function MessagePanel({ msg }: MessagePanelProps) {
         
         // Standard User Message
         return (
-            <Box marginBottom={1} flexDirection="row" paddingX={0}>
-                <Text color={colors.info} bold>You: </Text>
+            <Box marginBottom={0} marginTop={1} flexDirection="row" paddingX={0}>
+                <Text color={colors.info} dimColor>❯ </Text>
                 <Text>{msg.content}</Text>
             </Box>
         );
@@ -66,8 +71,8 @@ export function MessagePanel({ msg }: MessagePanelProps) {
         if (msg.functionCall) {
             // Model Planning/Calling Tool Panel
             return (
-                <Box marginBottom={0} paddingLeft={1} borderLeft={true} borderStyle="single" borderColor={colors.primary}>
-                    <Text color={colors.primary} dimColor>
+                <Box marginBottom={0} marginTop={0} paddingLeft={1} borderLeft={true} borderStyle="single" borderColor={colors.secondary}>
+                    <Text color={colors.secondary} dimColor>
                         ┌─ 🤖 AI invokes: {msg.functionCall.name}
                     </Text>
                 </Box>
@@ -85,8 +90,7 @@ export function MessagePanel({ msg }: MessagePanelProps) {
         }, [msg.content]);
 
         return (
-            <Box marginBottom={1} flexDirection="column" paddingX={0} borderLeft={true} borderStyle="single" borderColor={colors.success} paddingLeft={1}>
-                <Text color={colors.success} bold>AI</Text>
+            <Box marginBottom={0} marginTop={0} flexDirection="column" paddingX={0} borderLeft={true} borderStyle="single" borderColor={colors.secondary} paddingLeft={1}>
                 <Box>
                     <Text>{parsedContent as string}</Text>
                 </Box>

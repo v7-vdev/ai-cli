@@ -115,14 +115,14 @@ export function AppLayout({ ctx, toolExecutor }: AppLayoutProps) {
             />
             
             <ErrorBoundary onCrash={() => ctx.pipeline.recoverFromCrash()}>
-                <Box flexGrow={1} flexDirection="column" paddingX={1} paddingTop={1}>
+                <Box flexGrow={1} flexDirection="column" paddingX={1} paddingTop={0}>
                     <Static items={messages}>
                         {(msg) => (
                             <MessagePanel key={msg.id} msg={msg} />
                         )}
                     </Static>
                     
-                    <Box flexDirection="column" marginTop={1}>
+                    <Box flexDirection="column" marginTop={0}>
                         <ExecutionTimeline state={timelineState} />
 
                         {approvalRequest && (

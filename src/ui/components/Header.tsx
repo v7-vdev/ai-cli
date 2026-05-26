@@ -1,10 +1,8 @@
 import React from 'react';
 import { Box, Text } from 'ink';
-import { colors } from '../theme/colors.js';
 import { APP_NAME } from '../branding/constants.js';
 import { WorkspaceMetadata } from '../../workspace/index.js';
 import { GitMetadata } from '../../git/index.js';
-import chalk from 'chalk';
 
 interface HeaderProps {
     model: string;
@@ -19,30 +17,25 @@ export function Header({ model, session, workspace, git, isSafeMode, activeExecu
     const workspaceName = workspace?.projectName || 'Scanning...';
 
     return (
-        <Box flexDirection="row" justifyContent="space-between" paddingX={1} backgroundColor="white">
-            <Box flexDirection="row">
-                <Text color="black" bold>{APP_NAME} </Text>
+        <Box flexDirection="row" paddingX={1} paddingTop={0} paddingBottom={0} marginBottom={1}>
+            <Text dimColor>
+                <Text bold>{APP_NAME}</Text>
+                <Text> | W: {workspaceName}</Text>
+                <Text> | M: {model}</Text>
                 
-                <Text color="black">
-                    <Text dimColor> W:</Text> <Text bold>{workspaceName}</Text>
-                    <Text dimColor> | M:</Text> <Text bold>{model}</Text>
-                    
-                    {git?.isRepo && (
-                        <Text><Text dimColor> | B:</Text> <Text bold>{git.branch}</Text></Text>
-                    )}
-                    
-                    {isSafeMode && (
-                        <Text><Text dimColor> |</Text> <Text backgroundColor="red" color="white" bold> SAFE MODE </Text></Text>
-                    )}
-                    
-                    {activeExecutionId && (
-                        <Text><Text dimColor> | Exec:</Text> <Text backgroundColor="yellow" color="black" bold> {activeExecutionId} </Text></Text>
-                    )}
-                </Text>
-            </Box>
-            
-            <Text color="black">
-                <Text dimColor>Session:</Text> <Text bold>{session}</Text>
+                {git?.isRepo && (
+                    <Text> | B: {git.branch}</Text>
+                )}
+                
+                {isSafeMode && (
+                    <Text color="red" bold> | SAFE MODE</Text>
+                )}
+                
+                {activeExecutionId && (
+                    <Text color="yellow"> | Exec: {activeExecutionId}</Text>
+                )}
+
+                <Text> | Session: {session}</Text>
             </Text>
         </Box>
     );
