@@ -1,5 +1,3 @@
-import chalk from "chalk";
-import { select, isCancel, text, outro } from "@clack/prompts";
 import { Command } from "./command.js";
 import { RuntimeContext } from "../context/runtimeContext.js";
 
@@ -7,47 +5,21 @@ export const interactiveCommand: Command = {
     name: "/commands",
     description: "Interactive command menu",
     execute: async (args: string[], ctx: RuntimeContext) => {
-        const selectedCmd = await select({
-            message: "Select a command to run:",
-            options: [
-                { value: "/read", label: "/read - Read a file into context" },
-                { value: "/write", label: "/write - Write text to a file" },
-                { value: "/generate", label: "/generate - Generate code and write to a file" },
-                { value: "/edit", label: "/edit - Edit an existing file safely with AI" },
-                { value: "/run", label: "/run - Run a terminal command" },
-                { value: "/logs", label: "/logs - Manage audit logs (show/tail/clear)" },
-                { value: "/models", label: "/models - Change AI model" },
-                { value: "/mcp", label: "/mcp - Manage MCP Servers" },
-                { value: "/clear", label: "/clear - Clear conversation history" },
-                { value: "/help", label: "/help - Show help message" },
-                { value: "/exit", label: "/exit - Quit the CLI" }
-            ],
-        });
+        const commandsList = `**Available Commands:**
+- \`/read <path>\` - Read a file into context
+- \`/write <path>\` - Write text to a file
+- \`/generate <path>\` - Generate code and write to a file
+- \`/edit <path>\` - Edit an existing file safely with AI
+- \`/run <command>\` - Run a terminal command
+- \`/logs\` - Manage audit logs (show/tail/clear)
+- \`/provider switch <id>\` - Change AI provider (e.g. openrouter, groq, anthropic)
+- \`/model switch <name>\` - Change active AI model
+- \`/mcp\` - Manage MCP Servers
+- \`/clear\` - Clear conversation history
+- \`/exit\` - Quit the CLI
 
-        if (isCancel(selectedCmd)) {
-            console.log(chalk.yellow("Command selection cancelled."));
-            return;
-        }
+*Note: Type a command followed by its arguments directly into the input.*`;
 
-        const action = selectedCmd as string;
-        
-        if (["/read", "/write", "/generate", "/edit", "/run", "/logs"].includes(action)) {
-            const argInput = await text({
-                message: `Enter arguments for ${action}:`,
-                placeholder: "e.g., package.json or npm test",
-            });
-            
-            if (isCancel(argInput)) {
-                console.log(chalk.yellow("Command cancelled."));
-                return;
-            }
-            
-            await ctx.executeCommand(`${action} ${(argInput as string).trim()}`);
-        } else if (action === "/exit") {
-            outro(chalk.magenta("Goodbye!"));
-            process.exit(0);
-        } else {
-            await ctx.executeCommand(action);
-        }
+        ctx.addMessage({ role: 'system', content: commandsList });
     }
 };
