@@ -115,4 +115,15 @@ export class McpManager {
             return `Error calling tool ${toolName}: ${e.message}`;
         }
     }
+
+    async disconnectAll() {
+        for (const [name, client] of this.clients.entries()) {
+            try {
+                await client.close();
+            } catch (e) {
+                // Ignore errors during disconnect
+            }
+        }
+        this.clients.clear();
+    }
 }

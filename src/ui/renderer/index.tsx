@@ -47,5 +47,15 @@ export async function renderApp(isDryRun: boolean = false) {
     console.log(chalk.dim(`W: `) + chalk.white(w) + chalk.dim(` | P: `) + chalk.white(p) + chalk.dim(` | B: `) + chalk.white(b));
     console.log(''); // Empty line before orchestration
 
-    render(<AppLayout ctx={ctx} toolExecutor={toolExecutor} />);
+    const { unmount, clear } = render(<AppLayout ctx={ctx} toolExecutor={toolExecutor} />, { exitOnCtrlC: false });
+
+    const handleGracefulShutdown = async () => {
+        clear();
+        unmount();
+        await ctx.shutdown();
+        process.exit(0);
+    };
+
+    process.on('SIGINT', handleGracefulShutdown);
+    process.on('SIGTERM', handleGracefulShutdown);
 }

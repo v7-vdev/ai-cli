@@ -60,6 +60,16 @@ export class RuntimeContext {
         this.initSystemPrompt();
     }
 
+    public async shutdown() {
+        this.logger.log("INFO", "SYSTEM", "Graceful shutdown initiated by process signal");
+        if (this.pipeline && typeof this.pipeline.abort === 'function') {
+            this.pipeline.abort();
+        }
+        if (this.mcp) {
+            await this.mcp.disconnectAll();
+        }
+    }
+
     public async initMcp() {
         await this.mcp.connectAll();
     }

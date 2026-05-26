@@ -4,7 +4,7 @@ import { WorkspaceMetadata } from './metadata.js';
 import { detectFrameworks, detectPackageManager } from './detector.js';
 import { workspaceCache } from './cache.js';
 
-const IGNORED_DIRS = new Set(['node_modules', 'dist', 'build', '.git', 'coverage', '.next', '.ai-cli']);
+const IGNORED_DIRS = new Set(['node_modules', 'dist', 'build', '.git', 'coverage', '.next', '.ork']);
 const MAX_SCAN_DEPTH = 3;
 const MAX_SCAN_TIME_MS = 5000;
 

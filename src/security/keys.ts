@@ -3,7 +3,7 @@ import path from "path";
 import os from "os";
 import crypto from "crypto";
 
-const CONFIG_DIR = path.join(os.homedir(), ".ai-cli");
+const CONFIG_DIR = path.join(os.homedir(), ".ork");
 const MASTER_KEY_PATH = path.join(CONFIG_DIR, "master.key");
 const KEYS_FILE_PATH = path.join(CONFIG_DIR, "keys.json");
 const ALGORITHM = "aes-256-gcm";
@@ -14,6 +14,15 @@ export class KeyManager {
 
     private static init() {
         if (this.initialized) return;
+
+        const oldConfigDir = path.join(os.homedir(), ".ai-cli");
+        if (fs.existsSync(oldConfigDir) && !fs.existsSync(CONFIG_DIR)) {
+            try {
+                fs.renameSync(oldConfigDir, CONFIG_DIR);
+            } catch (e) {
+                // If rename fails, we just proceed and it will create a fresh .ork directory
+            }
+        }
 
         if (!fs.existsSync(CONFIG_DIR)) {
             fs.mkdirSync(CONFIG_DIR, { recursive: true });

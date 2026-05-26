@@ -15,7 +15,7 @@ export class AuditLogger {
     constructor(maxSizeBytes: number = 2 * 1024 * 1024) { // default 2MB
         this.maxSizeBytes = maxSizeBytes;
         
-        const logDir = path.join(process.cwd(), ".ai-cli");
+        const logDir = path.join(process.cwd(), ".ork");
         if (!fs.existsSync(logDir)) {
             try {
                 fs.mkdirSync(logDir, { recursive: true });

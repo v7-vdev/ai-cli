@@ -8,7 +8,7 @@ const PROTECTED_PATTERNS = [
     /^package-lock\.json$/,
     /^pnpm-lock\.yaml$/,
     /^yarn\.lock$/,
-    /^\.ai-cli([\\/].*)?$/,
+    /^\.ork([\\/].*)?$/,
     /credentials\.json$/,
     /secret/i
 ];
