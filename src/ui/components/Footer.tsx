@@ -26,23 +26,23 @@ export function Footer({ status, providerName, isSafeMode, hasApproval, hasMenu,
     const getStatusDisplay = () => {
         switch (status) {
             case 'idle':
-                return <Text color={colors.secondary} dimColor>Ready</Text>;
+                return <Text color={colors.secondary}>Ready</Text>;
             case 'thinking':
                 return (
-                    <Text color={colors.secondary} dimColor>
+                    <Text color={colors.secondary}>
                         <Spinner type="dots" /> Planning execution...
                     </Text>
                 );
             case 'executing_tool':
                 return (
-                    <Text color={colors.secondary} dimColor>
+                    <Text color={colors.secondary}>
                         <Spinner type="dots" /> Streaming response...
                     </Text>
                 );
             case 'error':
-                return <Text color={colors.error} dimColor>Error</Text>;
+                return <Text color={colors.error}>Error</Text>;
             default:
-                return <Text color={colors.secondary} dimColor>{status}</Text>;
+                return <Text color={colors.secondary}>{status}</Text>;
         }
     };
 

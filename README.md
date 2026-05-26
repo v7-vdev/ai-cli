@@ -1,14 +1,12 @@
-# AI CLI: Orchestration Runtime
+# ORK: Trust-Oriented Orchestration Runtime
 
-A terminal-native, AI-native developer orchestration runtime. Built for real developer workflows, this project focuses heavily on trust-oriented execution, orchestration clarity, and deterministic reliability under concurrency.
+A terminal-native AI developer runtime built for professional engineers who demand explicit control, absolute determinism, and approval-first execution.
 
 ---
 
-## Core Philosophy
+## 🛑 The Core Philosophy: "AI Proposes. Human Approves."
 
-**AI proposes. Human approves. Trust is explicit.**
-
-We fundamentally reject the concept of a "fully autonomous coding agent" operating blindly in the background. Real-world engineering requires predictability and control. The AI CLI intentionally prioritizes trust, predictability, and orchestration clarity over blind autonomy. 
+We fundamentally reject the concept of a "fully autonomous coding agent" operating blindly in the background. Real-world engineering requires predictability and control. ORK intentionally prioritizes trust, predictability, and orchestration clarity over blind autonomy. 
 
 - **Visibility Before Execution:** You see exactly what the AI intends to do—whether it's a file edit, a shell command, or an MCP tool call—*before* anything mutates on disk.
 - **Deterministic Orchestration:** Complex, multi-step LLM generations are strictly serialized into a predictable execution pipeline.

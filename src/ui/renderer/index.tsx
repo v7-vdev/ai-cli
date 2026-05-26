@@ -37,7 +37,8 @@ export async function renderApp(isDryRun: boolean = false) {
 `.trim();
 
     console.log(chalk.dim.gray(logo));
-    console.log(chalk.dim(`${APP_SUBTITLE}\n`));
+    console.log('');
+    console.log(chalk.dim.gray(`${APP_SUBTITLE}\n`));
     
     const w = ctx.workspace?.projectName || 'unknown';
     const p = ctx.provider.constructor.name.replace('Provider', '');

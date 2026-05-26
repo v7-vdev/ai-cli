@@ -53,7 +53,7 @@ export class McpManager {
             });
 
             const client = new Client(
-                { name: "ai-cli", version: "1.0.0" },
+                { name: "ork", version: "1.0.0" },
                 { capabilities: {} }
             );
 

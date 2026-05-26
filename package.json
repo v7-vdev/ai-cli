@@ -1,10 +1,11 @@
 {
-  "name": "ai-cli",
+  "name": "ork-cli",
   "version": "1.0.0",
-  "description": "AI Coding Assistant CLI",
+  "description": "Trust-Oriented Orchestration Runtime",
   "main": "dist/index.js",
   "bin": {
-    "ai-cli": "./dist/index.js"
+    "ai-cli": "./dist/index.js",
+    "ork": "./dist/index.js"
   },
   "scripts": {
     "dev": "tsx src/index.ts",
