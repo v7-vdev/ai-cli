@@ -1,5 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { AIProvider, Message, ChatResponse, GenericTool } from "./provider.js";
+import { AIProvider, Message, ChatResponse, GenericTool, ProviderMetadata } from "./base/provider.js";
+import { ProviderError, InvalidKeyError, ProviderUnavailableError } from "./base/errors.js";
+import { StreamNormalizer } from "./base/streaming.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -24,18 +26,16 @@ function convertSchemaForGemini(schema: any): any {
 export class GeminiProvider implements AIProvider {
     private ai: GoogleGenAI;
     private model: string = "gemini-2.5-flash";
+    private abortController: AbortController | null = null;
 
-    constructor() {
-        if (!process.env.GEMINI_API_KEY) {
-            console.warn("Warning: GEMINI_API_KEY is not set in the environment.");
-        }
-        
+    constructor(apiKey?: string) {
         this.ai = new GoogleGenAI({
-            apiKey: process.env.GEMINI_API_KEY || "",
+            apiKey: apiKey || process.env.GEMINI_API_KEY || "",
         });
     }
 
     async chat(messages: Message[], tools?: GenericTool[]): Promise<ChatResponse> {
+        this.abortController = new AbortController();
         try {
             const contents = messages.map(msg => {
                 const role = msg.role === 'system' ? 'user' : msg.role;
@@ -72,8 +72,52 @@ export class GeminiProvider implements AIProvider {
 
             return { text: response.text || "No response text." };
         } catch (error: any) {
-            console.error("Gemini API Error:", error.message || error);
-            return { text: "Something went wrong communicating with Gemini." };
+            if (error.name === 'AbortError') return { text: "[Request cancelled]" };
+            if (error.message?.includes("API key not valid")) throw new InvalidKeyError("gemini", error);
+            throw new ProviderError(error.message, "gemini", error);
+        } finally {
+            this.abortController = null;
+        }
+    }
+
+    async stream(messages: Message[], tools?: GenericTool[], onChunk?: (chunk: string) => void): Promise<ChatResponse> {
+        this.abortController = new AbortController();
+        try {
+            // Note: GoogleGenAI streaming uses an async iterator. We just simulate it here
+            // using the simple stream interface for the new SDK, since `generateContentStream` works similarly.
+            const contents = messages.map(msg => {
+                const role = msg.role === 'system' ? 'user' : msg.role;
+                const parts: any[] = [];
+                if (msg.content) parts.push({ text: msg.content });
+                return { role, parts };
+            });
+
+            const responseStream = await this.ai.models.generateContentStream({
+                model: this.model,
+                contents: contents,
+            });
+
+            const normalizer = new StreamNormalizer("gemini");
+            for await (const chunk of responseStream) {
+                if (chunk.text) {
+                    normalizer.processDelta({ content: chunk.text });
+                    if (onChunk) onChunk(chunk.text);
+                }
+                if (chunk.functionCalls && chunk.functionCalls.length > 0) {
+                    const fc = chunk.functionCalls[0];
+                    if (fc && fc.name) {
+                        normalizer.processDelta({ tool_calls: [{ id: "fc", function: { name: fc.name, arguments: JSON.stringify(fc.args || {}) } }] });
+                    }
+                }
+            }
+
+            normalizer.finalize();
+            return normalizer.getChatResponse();
+        } catch (error: any) {
+            if (error.name === 'AbortError') return { text: "\n[Stream cancelled]" };
+            throw new ProviderError(error.message, "gemini", error);
+        } finally {
+            this.abortController = null;
         }
     }
 
@@ -88,12 +132,26 @@ export class GeminiProvider implements AIProvider {
         ];
     }
 
-    getMetadata() {
+    getMetadata(): ProviderMetadata {
         return {
+            id: "gemini",
             name: "Gemini",
-            fastInference: this.model.includes('flash'),
-            contextWindowSize: 1000000,
-            supportsToolExecution: true
+            capabilities: {
+                supportsStreaming: true,
+                supportsTools: true,
+                supportsReasoning: false,
+                supportsVision: true,
+                supportsLongContext: true,
+                contextWindow: 1000000,
+                latencyProfile: this.model.includes('flash') ? 'fast' : 'comprehensive',
+                localProvider: false,
+                hostedProvider: true,
+                multimodalSupport: true
+            }
         };
+    }
+
+    cancel(): void {
+        if (this.abortController) this.abortController.abort();
     }
 }

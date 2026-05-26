@@ -1,9 +1,9 @@
-interface FunctionCall {
+export interface FunctionCall {
     name: string;
     args: Record<string, any>;
 }
 
-interface FunctionResponse {
+export interface FunctionResponse {
     name: string;
     response: Record<string, any>;
 }
@@ -26,17 +26,30 @@ export interface ChatResponse {
     functionCall?: FunctionCall;
 }
 
-interface ProviderMetadata {
+export interface ProviderCapabilities {
+    supportsStreaming: boolean;
+    supportsTools: boolean;
+    supportsReasoning: boolean;
+    supportsVision: boolean;
+    supportsLongContext: boolean;
+    contextWindow: number;
+    latencyProfile: 'fast' | 'balanced' | 'comprehensive';
+    localProvider: boolean;
+    hostedProvider: boolean;
+    multimodalSupport: boolean;
+}
+
+export interface ProviderMetadata {
+    id: string;
     name: string;
-    fastInference: boolean;
-    contextWindowSize: number;
-    supportsToolExecution: boolean;
+    capabilities: ProviderCapabilities;
 }
 
 export interface AIProvider {
     chat(messages: Message[], tools?: GenericTool[]): Promise<ChatResponse>;
+    stream?(messages: Message[], tools?: GenericTool[], onChunk?: (chunk: string) => void): Promise<ChatResponse>;
     setModel(modelName: string): void;
     getAvailableModels(): { value: string, label: string }[];
     getMetadata(): ProviderMetadata;
+    cancel?(): void;
 }
-

@@ -77,15 +77,33 @@ During this stabilization loop, real operational bugs—such as a catastrophic q
 
 ---
 
+## Universal BYOK Multi-Provider Architecture
+
+The runtime features a fully realized **Bring Your Own Key (BYOK)** ecosystem, seamlessly integrating commercial models, open networks, and local inference without sacrificing trust or predictability.
+
+- **Master Key Security**: All provider credentials are encrypted locally using AES-256-GCM via a machine-independent `master.key`. We never store API keys in plaintext and never exfiltrate credentials to the cloud.
+- **Universal Abstraction**: Deep native support for Anthropic, Gemini, OpenAI-compatible APIs (OpenRouter, Groq, DeepSeek, xAI, Together, Mistral), and local endpoints (Ollama, LM Studio).
+- **Session Isolation**: Switching providers instantly wipes temporary model context, tool mappings, and streaming state to guarantee deterministic behavior and prevent cross-provider contamination.
+- **Streaming Normalization**: Disparate provider behaviors—from raw SSE chunks to reasoning blocks and fragmented tool-calls—are unified into a single, predictable terminal rendering stream.
+- **Local-First Safety**: Hardened endpoint validation specifically prevents remote URL injection attacks on localhost inference servers.
+
+```bash
+# Terminal Native Provider Management
+/provider add openrouter     # Securely encrypts and stores key
+/provider switch deepseek    # Dynamically hot-swaps active engine
+/provider health             # Queries provider status (cached for 30s)
+/model switch claude-3-7     # Switches active model seamlessly
+```
+
+---
+
 ## Upcoming Roadmap
 
-With the orchestration architecture fully stabilized, the upcoming focus shifts toward multi-provider ecosystems and workflow ergonomics:
+With the orchestration architecture and multi-provider foundation fully stabilized, the upcoming focus shifts toward workflow ergonomics:
 
-- **BYOK (Bring Your Own Key) Provider Support:** Expanding native support for external models (Anthropic, Gemini, Groq, etc.).
-- **Multi-Provider Orchestration:** Hot-swapping providers dynamically within a single workflow.
-- **Workflow Refinement:** Streamlining the terminal UI for faster approval cycles (e.g., batching trusted operations).
-- **Performance Optimization:** Reducing TUI render overhead and improving diff parsing speeds.
-- **Developer Ergonomics:** Polishing the REPL for standard coding workflows.
+- **Workflow Refinement**: Streamlining the terminal UI for faster approval cycles (e.g., batching trusted operations).
+- **Performance Optimization**: Reducing TUI render overhead and improving diff parsing speeds.
+- **Developer Ergonomics**: Polishing the REPL for standard coding workflows.
 
 ---
 

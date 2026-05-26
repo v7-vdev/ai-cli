@@ -12,6 +12,8 @@ import { clearCommand, helpCommand, exitCommand } from "../commands/system.js";
 import { interactiveCommand } from "../commands/interactive.js";
 import { planCommand } from "../commands/plan.js";
 import { safeModeCommand } from "../commands/safeMode.js";
+import { providerCommand } from "../commands/provider.js";
+import { modelCommand } from "../commands/model.js";
 
 export class CommandParser {
     private commands: Map<string, Command> = new Map();
@@ -31,6 +33,8 @@ export class CommandParser {
         this.register(interactiveCommand);
         this.register(planCommand);
         this.register(safeModeCommand);
+        this.register(providerCommand);
+        this.register(modelCommand);
     }
 
     private register(cmd: Command) {

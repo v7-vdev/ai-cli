@@ -1,8 +1,6 @@
 import chalk from "chalk";
-import { AIProvider, Message } from "../providers/provider.js";
-import { GeminiProvider } from "../providers/gemini.js";
-import { GroqProvider } from "../providers/groq.js";
-import { AnthropicProvider } from "../providers/anthropic.js";
+import { AIProvider, Message } from "../providers/base/provider.js";
+import { ProviderRegistry } from "../providers/registry.js";
 import { McpManager } from "../mcp/client.js";
 import { PermissionManager } from "../permissions/permissionManager.js";
 import { AuditLogger } from "../logs/auditLogger.js";
@@ -11,7 +9,7 @@ import { GitScanner, GitMetadata } from "../git/index.js";
 import { ExecutionPipeline } from "../execution/pipeline.js";
 
 export class RuntimeContext {
-    public provider: AIProvider;
+    public registry: ProviderRegistry;
     public history: Message[] = [];
     public mcp: McpManager;
     public cwd: string;
@@ -33,22 +31,14 @@ export class RuntimeContext {
         this.cwd = process.cwd();
         this.pipeline = new ExecutionPipeline(this);
         
-        if (process.env.ANTHROPIC_API_KEY) {
-            this.provider = new AnthropicProvider();
-            this.logger.log("INFO", "CONTEXT", "Initialized with Anthropic provider");
-        } else if (process.env.GEMINI_API_KEY) {
-            this.provider = new GeminiProvider();
-            this.logger.log("INFO", "CONTEXT", "Initialized with Gemini provider");
-        } else if (process.env.GROQ_API_KEY) {
-            this.provider = new GroqProvider();
-            this.logger.log("INFO", "CONTEXT", "Initialized with Groq provider");
-        } else {
-            console.log(chalk.yellow("Warning: No API keys found in .env. Defaulting to Gemini."));
-            this.provider = new GeminiProvider();
-            this.logger.log("WARN", "CONTEXT", "No API keys found, defaulted to Gemini");
-        }
+        this.registry = new ProviderRegistry();
+        this.logger.log("INFO", "CONTEXT", `Initialized ProviderRegistry with active provider: ${this.registry.getActiveProviderId()}`);
 
         this.initSystemPrompt();
+    }
+
+    public get provider(): AIProvider {
+        return this.registry.getActiveProvider();
     }
 
     private initSystemPrompt() {
