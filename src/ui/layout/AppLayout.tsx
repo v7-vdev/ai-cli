@@ -151,7 +151,14 @@ export function AppLayout({ ctx, toolExecutor }: AppLayoutProps) {
                 </Box>
             </ErrorBoundary>
 
-            <Footer status={status} onSubmit={sendMessage} />
+            <Footer 
+                status={status} 
+                providerName={ctx.provider.constructor.name.replace('Provider', '')}
+                isSafeMode={ctx.pipeline.isSafeMode}
+                hasApproval={!!approvalRequest}
+                hasMenu={!!menuRequest || !!inputRequest}
+                onSubmit={sendMessage} 
+            />
         </Box>
     );
 }

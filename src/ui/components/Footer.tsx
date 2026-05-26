@@ -7,10 +7,14 @@ import { ChatStatus } from '../hooks/useChat.js';
 
 interface FooterProps {
     status: ChatStatus;
+    providerName: string;
+    isSafeMode: boolean;
+    hasApproval: boolean;
+    hasMenu: boolean;
     onSubmit: (input: string) => void;
 }
 
-export function Footer({ status, onSubmit }: FooterProps) {
+export function Footer({ status, providerName, isSafeMode, hasApproval, hasMenu, onSubmit }: FooterProps) {
     const [inputValue, setInputValue] = useState('');
 
     const handleSubmit = (value: string) => {
@@ -32,7 +36,7 @@ export function Footer({ status, onSubmit }: FooterProps) {
             case 'executing_tool':
                 return (
                     <Text color={colors.info}>
-                        <Spinner type="dots" /> Executing Tool...
+                        <Spinner type="dots" /> Executing...
                     </Text>
                 );
             case 'error':
@@ -43,43 +47,50 @@ export function Footer({ status, onSubmit }: FooterProps) {
     };
 
     const getCommandHints = () => {
+        if (hasApproval) return 'Commands: [y] approve [n] deny [v] view diff';
+        if (hasMenu) return 'Commands: ↑/↓ navigate, Enter select';
+        
         switch (status) {
             case 'idle':
-                return 'Commands: /plan /edit /generate /exit';
+                return 'Commands: /commands /provider /model';
             case 'thinking':
-                return 'AI is generating a response...';
             case 'executing_tool':
-                return 'Waiting for tool execution to complete...';
+                return 'Waiting for active execution...';
             case 'error':
-                return 'An error occurred. Ready for next input.';
+                return 'Ready for next input.';
             default:
                 return '';
         }
     };
 
+    const canType = status === 'idle' && !hasApproval && !hasMenu;
+
     return (
-        <Box flexDirection="column" borderTop={true} borderStyle="single" borderColor={status === 'idle' ? colors.toolBorder : colors.secondary} paddingX={1} paddingTop={0} paddingBottom={0}>
+        <Box flexDirection="column" paddingX={1} paddingTop={1} paddingBottom={0}>
             <Box flexDirection="row" justifyContent="space-between" marginBottom={0}>
                 <Box flexDirection="row">
-                    <Text color={colors.secondary}>Status: </Text>
+                    <Text color={colors.secondary} dimColor>Status: </Text>
                     {getStatusDisplay()}
+                    <Text color={colors.secondary} dimColor>  |  Provider: </Text>
+                    <Text color={colors.secondary} bold>{providerName}</Text>
+                    {isSafeMode && <Text color={colors.warning} dimColor>  |  Mode: SAFE</Text>}
                 </Box>
-                <Text color={colors.secondary}>
+                <Text color={colors.secondary} dimColor>
                     {getCommandHints()}
                 </Text>
             </Box>
             <Box flexDirection="row" marginTop={0}>
-                {status === 'idle' ? (
-                    <Text color={colors.primary} bold>❯ </Text>
+                {canType ? (
+                    <Text color={colors.success} bold>❯ </Text>
                 ) : (
                     <Text color={colors.secondary} dimColor>❯ </Text>
                 )}
-                {status === 'idle' ? (
+                {canType ? (
                     <TextInput
                         value={inputValue}
                         onChange={setInputValue}
                         onSubmit={handleSubmit}
-                        placeholder="Ask something or type a command..."
+                        placeholder="Type a command or ask a question..."
                     />
                 ) : (
                     <Text color={colors.secondary} dimColor>{inputValue || '...'}</Text>
