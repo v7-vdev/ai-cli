@@ -112,6 +112,8 @@ export function AppLayout({ ctx, toolExecutor }: AppLayoutProps) {
                 git={ctx.git} 
                 isSafeMode={ctx.pipeline.isSafeMode}
                 activeExecutionId={approvalRequest?.executionId ?? undefined}
+                mcpConnections={ctx.mcp.getServers().length}
+                status={status}
             />
             
             <ErrorBoundary onCrash={() => ctx.pipeline.recoverFromCrash()}>

@@ -11,13 +11,20 @@ interface HeaderProps {
     git?: GitMetadata | undefined;
     isSafeMode?: boolean;
     activeExecutionId?: string | null | undefined;
+    mcpConnections?: number;
+    status: string;
 }
 
-export function Header({ model, session, workspace, git, isSafeMode, activeExecutionId }: HeaderProps) {
+export function Header({ model, session, workspace, git, isSafeMode, activeExecutionId, mcpConnections = 0, status }: HeaderProps) {
     const workspaceName = workspace?.projectName || 'Scanning...';
+    
+    // Determine the orchestration state verb
+    let orchestrationState = 'Awaiting orchestration input';
+    if (status === 'thinking') orchestrationState = 'Provider active, generating...';
+    if (status === 'executing_tool') orchestrationState = 'Executing orchestration workflow...';
 
     return (
-        <Box flexDirection="row" paddingX={1} paddingTop={0} paddingBottom={0} marginBottom={1}>
+        <Box flexDirection="column" paddingX={1} paddingTop={0} paddingBottom={0} marginBottom={1}>
             <Text dimColor>
                 <Text bold>{APP_NAME}</Text>
                 <Text> | W: {workspaceName}</Text>
@@ -37,6 +44,13 @@ export function Header({ model, session, workspace, git, isSafeMode, activeExecu
 
                 <Text> | Session: {session}</Text>
             </Text>
+            
+            {/* Subtle Operational Presence */}
+            <Box flexDirection="row" marginTop={0}>
+                <Text dimColor color="gray">
+                    Workspace ready  |  {mcpConnections} MCP server{mcpConnections !== 1 ? 's' : ''} connected  |  Provider healthy  |  {orchestrationState}
+                </Text>
+            </Box>
         </Box>
     );
 }

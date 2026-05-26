@@ -21,7 +21,8 @@ export function MessagePanel({ msg }: MessagePanelProps) {
         }
         
         return (
-            <Box marginY={0} paddingLeft={1} borderLeft={true} borderStyle="single" borderColor={colors.secondary}>
+            <Box marginY={0} paddingLeft={1} flexDirection="column" borderLeft={true} borderStyle="single" borderColor={colors.secondary}>
+                <Text color={colors.secondary} dimColor bold>SYSTEM:</Text>
                 <Text color={colors.secondary} dimColor>
                     {msg.content}
                 </Text>
@@ -49,8 +50,9 @@ export function MessagePanel({ msg }: MessagePanelProps) {
                     marginBottom={0}
                     flexDirection="column"
                 >
+                    <Text color={colors.secondary} dimColor bold>TOOL:</Text>
                     <Text color={colors.secondary} dimColor>
-                        └─ ⚙️ Tool Result: {msg.functionResponse.name}
+                        └─ Execution: {msg.functionResponse.name}
                     </Text>
                     <Text color={colors.mutedText} dimColor>
                         {resultText}
@@ -62,7 +64,7 @@ export function MessagePanel({ msg }: MessagePanelProps) {
         // Standard User Message
         return (
             <Box marginBottom={0} marginTop={1} flexDirection="row" paddingX={0}>
-                <Text color={colors.info} dimColor>❯ </Text>
+                <Text color="cyan" dimColor>❯ </Text>
                 <Text>{msg.content}</Text>
             </Box>
         );
@@ -71,9 +73,10 @@ export function MessagePanel({ msg }: MessagePanelProps) {
         if (msg.functionCall) {
             // Model Planning/Calling Tool Panel
             return (
-                <Box marginBottom={0} marginTop={0} paddingLeft={1} borderLeft={true} borderStyle="single" borderColor={colors.secondary}>
+                <Box marginBottom={0} marginTop={0} paddingLeft={1} flexDirection="column" borderLeft={true} borderStyle="single" borderColor={colors.secondary}>
+                    <Text color={colors.secondary} dimColor bold>AI:</Text>
                     <Text color={colors.secondary} dimColor>
-                        ┌─ 🤖 AI invokes: {msg.functionCall.name}
+                        │ Invoking workflow: {msg.functionCall.name}
                     </Text>
                 </Box>
             );
@@ -91,6 +94,7 @@ export function MessagePanel({ msg }: MessagePanelProps) {
 
         return (
             <Box marginBottom={0} marginTop={0} flexDirection="column" paddingX={0} borderLeft={true} borderStyle="single" borderColor={colors.secondary} paddingLeft={1}>
+                <Text color={colors.success} bold>AI:</Text>
                 <Box>
                     <Text>{parsedContent as string}</Text>
                 </Box>

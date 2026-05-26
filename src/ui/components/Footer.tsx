@@ -52,10 +52,10 @@ export function Footer({ status, providerName, isSafeMode, hasApproval, hasMenu,
         
         switch (status) {
             case 'idle':
-                return 'Commands: /commands /provider /model';
+                return 'Commands: /commands /provider /model /plan /run --dry-run';
             case 'thinking':
             case 'executing_tool':
-                return 'Waiting for active execution...';
+                return 'Commands: [cancel] [hide logs]';
             case 'error':
                 return 'Ready for next input.';
             default:
@@ -81,7 +81,7 @@ export function Footer({ status, providerName, isSafeMode, hasApproval, hasMenu,
             </Box>
             <Box flexDirection="row" marginTop={0}>
                 {canType ? (
-                    <Text color={colors.success} bold>❯ </Text>
+                    <Text color="cyan" bold>❯ </Text>
                 ) : (
                     <Text color={colors.secondary} dimColor>❯ </Text>
                 )}
