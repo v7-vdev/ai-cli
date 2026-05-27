@@ -10,7 +10,13 @@ import os from "os";
 import { fileURLToPath } from "url";
 
 // Deterministic configuration migration (MUST RUN FIRST)
-MigrationManager.runMigration();
+try {
+    MigrationManager.runMigration();
+} catch (e: any) {
+    console.error(`\n[ORK STARTUP ERROR] Migration failed: ${e.message}`);
+    console.error(`Please run 'ork init' to repair your configuration or check ~/.ork directories.`);
+    process.exit(1);
+}
 
 // Setup deterministic crash logging
 const logsDir = path.join(os.homedir(), ".ork", "logs");
@@ -59,5 +65,21 @@ if (args[0] === "init") {
 }
 
 const isDryRun = args.includes("--dry-run") || args.includes("--preview-only");
+const isAudit = args.includes("--audit");
 
-renderApp(isDryRun);
+if (isAudit) {
+    import("./utils/profiler.js").then(({ RuntimeProfiler }) => {
+        process.on("exit", () => {
+            RuntimeProfiler.writeHeapSnapshot();
+            RuntimeProfiler.auditActiveHandles();
+        });
+    });
+}
+
+try {
+    renderApp(isDryRun);
+} catch (e: any) {
+    console.error(`\n[ORK RUNTIME ERROR] Failed to boot orchestration runtime: ${e.message}`);
+    console.error(`This may be due to a corrupted keys.json or missing dependencies. Try running 'ork doctor' or 'ork init'.`);
+    process.exit(1);
+}

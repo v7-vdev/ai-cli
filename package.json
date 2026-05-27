@@ -10,7 +10,9 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc",
-    "package": "npm run build && pkg package.json"
+    "package": "npm run build && pkg package.json",
+    "release": "node scripts/release.js",
+    "test": "node --test --import tsx src/tests/*.test.ts"
   },
   "pkg": {
     "scripts": "dist/**/*.js",

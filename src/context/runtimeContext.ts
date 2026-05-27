@@ -7,6 +7,7 @@ import { AuditLogger } from "../logs/auditLogger.js";
 import { WorkspaceScanner, WorkspaceMetadata } from "../workspace/index.js";
 import { GitScanner, GitMetadata } from "../git/index.js";
 import { ExecutionPipeline } from "../execution/pipeline.js";
+import { killAllChildren } from "../tools/runCommand.js";
 
 export class RuntimeContext {
     public registry: ProviderRegistry;
@@ -66,6 +67,9 @@ export class RuntimeContext {
         
         // Trigger abort controller to sever active streams
         this.abortController.abort();
+        
+        // Force kill any orphaned subprocess trees
+        killAllChildren();
         
         // Also abort pipeline
         if (this.pipeline && typeof this.pipeline.abort === 'function') {

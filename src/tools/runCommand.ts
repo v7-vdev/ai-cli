@@ -1,5 +1,25 @@
-import { spawn } from "child_process";
+import { spawn, ChildProcess } from "child_process";
+import { execSync } from "child_process";
 import { hasShellOperators } from "../security/commands.js";
+
+const activeProcesses = new Set<ChildProcess>();
+
+export function killAllChildren() {
+    for (const child of activeProcesses) {
+        if (!child.killed && child.pid) {
+            try {
+                if (process.platform === "win32") {
+                    execSync(`taskkill /pid ${child.pid} /T /F`, { stdio: "ignore" });
+                } else {
+                    process.kill(-child.pid, "SIGKILL");
+                }
+            } catch {
+                // Ignore errors during panic kill
+            }
+        }
+    }
+    activeProcesses.clear();
+}
 
 function tokenizeCommand(command: string): string[] {
     // Basic tokenizer that handles quotes (single and double)
@@ -59,7 +79,9 @@ export async function runCommand(command: string): Promise<{ success: boolean; o
 
     return new Promise((resolve) => {
         try {
-            const child = spawn(cmd, args, { cwd: process.cwd(), shell: false });
+            const child = spawn(cmd, args, { cwd: process.cwd(), shell: false, detached: process.platform !== "win32" });
+            activeProcesses.add(child);
+            
             let output = "";
             let errorOutput = "";
 
@@ -76,10 +98,12 @@ export async function runCommand(command: string): Promise<{ success: boolean; o
             }
 
             child.on("error", (err: any) => {
+                activeProcesses.delete(child);
                 resolve({ success: false, output: `Error: ${err.message}` });
             });
 
             child.on("close", (code: number | null) => {
+                activeProcesses.delete(child);
                 const finalOutput = (output + "\n" + errorOutput).trim();
                 resolve({
                     success: code === 0,

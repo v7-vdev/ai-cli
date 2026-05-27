@@ -85,7 +85,10 @@ export async function renderApp(isDryRun: boolean = false) {
         await ctx.shutdown(true);
         
         // Ensure cursor is visible and terminal is sane before exiting
-        process.stdout.write('\x1B[?25h'); 
+        process.stdout.write('\x1B[?25h'); // Show cursor
+        process.stdout.write('\x1B[0m');   // Reset formatting
+        process.stdout.write('\x1B[?1049l'); // Leave alternate screen buffer (if any)
+        
         process.exit(0);
     };
 
