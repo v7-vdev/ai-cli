@@ -4,7 +4,6 @@
   "description": "Trust-Oriented Orchestration Runtime",
   "main": "dist/index.js",
   "bin": {
-    "ai-cli": "./dist/index.js",
     "ork": "./dist/index.js"
   },
   "scripts": {
