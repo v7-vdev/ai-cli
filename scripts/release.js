@@ -60,7 +60,7 @@ console.log('[Release] Packaging with CAXA...');
 const caxaCmd = `npx caxa --input . --output "${exePath}" --exclude ".git" "release" "src" "tests" -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/dist/index.js"`;
 try {
     execSync(caxaCmd, { stdio: 'inherit', cwd: ROOT_DIR });
-} catch (e: any) {
+} catch (e) {
     console.error(`[Release] CAXA packaging failed. Are you sure caxa is installed?`);
     process.exit(1);
 }

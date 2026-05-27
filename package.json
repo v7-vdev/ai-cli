@@ -1,6 +1,6 @@
 {
   "name": "ork-cli",
-  "version": "1.0.0",
+  "version": "0.9.0-beta",
   "description": "Trust-Oriented Orchestration Runtime",
   "main": "dist/index.js",
   "bin": {
