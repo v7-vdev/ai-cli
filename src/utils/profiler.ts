@@ -37,7 +37,7 @@ export class RuntimeProfiler {
             return;
         }
 
-        const categories: Record<string, number> = {
+        const categories = {
             Timers: 0,
             Sockets: 0,
             Streams: 0,

@@ -12,8 +12,13 @@ export function writeAtomicSync(targetPath: string, data: string | Buffer, optio
     let fd: number | null = null;
     try {
         // Open file explicitly for writing
-        fd = fs.openSync(tmpPath, 'w', typeof options === 'object' && options.mode ? options.mode : 0o666);
-        fs.writeSync(fd, data);
+        const mode = (typeof options === 'object' && options !== null && options.mode) ? options.mode : 0o666;
+        fd = fs.openSync(tmpPath, 'w', mode);
+        if (typeof data === 'string') {
+            fs.writeSync(fd, data);
+        } else {
+            fs.writeSync(fd, data);
+        }
         
         // Force flush to disk to prevent power-loss corruption
         fs.fsyncSync(fd);
