@@ -1,0 +1,17 @@
+# Critical Runtime Boundaries
+# These paths require explicit review from core maintainers to merge.
+
+# Subprocess, Process Trees, Signal Handling
+src/tools/runCommand.ts    @v7-vdev
+src/git/exec.ts            @v7-vdev
+
+# Runtime Architecture & Context Lifecycle
+src/context/               @v7-vdev
+src/execution/pipeline.ts  @v7-vdev
+
+# Release & Packaging Pipelines
+scripts/release.js         @v7-vdev
+package.json               @v7-vdev
+
+# TUI Renderer Lifecycle
+src/render/                @v7-vdev

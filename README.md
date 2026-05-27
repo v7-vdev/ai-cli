@@ -1,119 +1,67 @@
-# ORK: Trust-Oriented Orchestration Runtime
+# ORK
 
-A terminal-native AI developer runtime built for professional engineers who demand explicit control, absolute determinism, and approval-first execution.
+**A trust-oriented orchestration runtime for local-first execution.**
 
----
+ORK is a strict, deterministically planned runtime environment designed to execute complex shell operations, file modifications, and git sequences locally. 
 
-### The Core Philosophy
-1. AI proposes.
-2. Human approves.
-3. Trust is explicit.
-4. Execution never occurs silently.
+Built with operational integrity in mind, ORK operates entirely under the philosophy: **AI proposes. Humans approve. Trust is explicit.**
 
-> [!IMPORTANT]
-> **Zero Telemetry Guarantee:** ORK is infrastructure-grade and local-first. We explicitly guarantee **Zero Telemetry**, **No Cloud Logging**, and **No Background Analytics**. Your code and infrastructure data remain strictly on your machine.
+> **Note**: ORK is currently undergoing public technical validation. It is designed for infrastructure engineers, rigorous testing, and operationally demanding environments.
 
-## 🛑 The Core Philosophy: "AI Proposes. Human Approves."
+## Runtime Philosophy
+Most AI coding tools operate as messy chat wrappers or unstable web UI dashboards. ORK takes a radically different approach:
 
-We fundamentally reject the concept of a "fully autonomous coding agent" operating blindly in the background. Real-world engineering requires predictability and control. ORK intentionally prioritizes trust, predictability, and orchestration clarity over blind autonomy. 
+1. **Strict JSON Planning**: Execution never occurs silently. Before any filesystem or shell operation is touched, ORK compiles a strict JSON execution plan.
+2. **SAFE MODE Default**: The execution environment defaults to SAFE MODE, guaranteeing zero modifications occur without explicit terminal-level human verification.
+3. **Local-First Infrastructure**: ORK connects locally to your active workspace, understanding your frameworks natively.
+4. **Telemetry-Free**: What happens locally, stays locally. ORK does not phone home with your code, metrics, or execution logs.
 
-- **Visibility Before Execution:** You see exactly what the AI intends to do—whether it's a file edit, a shell command, or an MCP tool call—*before* anything mutates on disk.
-- **Deterministic Orchestration:** Complex, multi-step LLM generations are strictly serialized into a predictable execution pipeline.
-- **Developer-Controlled Workflows:** The developer remains firmly in the loop as the final arbitrator of system state.
+## Installation
 
----
+### Native Binary Downloads (Recommended)
+You can download deterministic packaged binaries directly from the releases page, which bypass the need for a global Node.js installation.
 
-## Security & Trust Architecture
+- [Windows (.exe)](#)
+- [macOS (Darwin)](#)
+- [Linux (x64)](#)
 
-To ensure operational reliability and developer trust, the runtime enforces a hardened security layer around all execution boundaries:
-
-- **ApprovalQueue Serialization:** Concurrent tool calls from the AI are queued and serialized, preventing race conditions and ensuring deterministic execution ordering.
-- **ExecutionPipeline:** A centralized execution boundary that wraps every file mutation and shell command, enforcing timeouts, safety checks, and audit logging.
-- **Safe Mode Enforcement:** Blocks destructive commands entirely when enabled.
-- **TOCTOU Protection:** Time-Of-Check to Time-Of-Use hashing guarantees that if a file is modified externally while sitting in the approval queue, the execution is safely aborted.
-- **Workspace Boundary Enforcement:** Real-path resolution strictly prevents the AI from escaping the current repository via symlinks or nested execution paths.
-- **Interpreter Execution Blocking:** Proactively intercepts attempts to run raw scripts directly via `bash`, `python`, or `node`, forcing transparent command execution.
-- **Diff Truncation Protection:** Ensures large file diffs cannot hide malicious payloads in un-rendered chunks by explicitly warning on truncation.
-- **Large-File Safeguards:** Gracefully aborts diff generation on massive files to prevent Event Loop blocking and UI freezing.
-- **MCP Capability Risk Escalation:** Flags potentially dangerous third-party tools connected via the Model Context Protocol.
-- **Queue Crash Recovery & ErrorBoundary:** TUI rendering crashes instantly trigger an `abortAll()` on the orchestration queue, unfreezing the REPL and preventing hidden dangling executions.
-- **Append-Only Audit Logging:** Immutable tracking of all execution requests, providing full post-mortem visibility.
-
-These systems exist for one reason: to guarantee that the runtime behaves exactly as expected, even when the AI generates highly complex or unpredictable orchestration outputs.
-
----
-
-## Stabilization & Stress Testing
-
-To achieve production-grade stability, the runtime recently underwent an intense, automated stabilization phase featuring:
-
-- **500-Iteration Stress Testing:** Hammering the orchestration pipeline with rapid, concurrent file writes, synthetic TUI crashes, and cancellation bursts.
-- **Queue Determinism Validation:** Ensuring zero race conditions between active tool executions.
-- **Event-Loop Lag Monitoring:** Measuring timer drift to detect and resolve synchronous bottlenecks (e.g., diff generation blocking).
-- **Listener Leak Detection:** Monitoring global listeners across repeated approval cycles.
-- **REPL Recovery Testing:** Guaranteeing that after simulated crash flushes and `abortAll()` calls, the terminal unfreezes and accepts user input instantly.
-- **Async Cleanup Verification:** Tracking pending promises to guarantee zero async memory leaks.
-
-During this stabilization loop, real operational bugs—such as a catastrophic queue deadlock during UI crashes—were discovered and surgically fixed using `Promise.race()` handlers, cementing the runtime's reliability.
-
----
-
-## Current Status
-
-- **Production-Ready Orchestration Foundation:** The core pipeline, queue, and security boundary are locked in and hardened.
-- **Stable for Real-World Workflows:** Memory, event-loop, and orchestration state are proven stable over extended developer sessions.
-- **Under Active Workflow Refinement:** Focusing on ergonomics, speed, and real-world utility.
-
----
-
-## Terminal UX 
-
-*Visualizing trust-oriented orchestration.*
-
-![TUI Startup & Context](./assets/startup-screenshot.png)
-*Workspace initialization and Git context detection.*
-
-<!-- TODO: Insert ApprovalPanel Screenshot here -->
-*Approval Panel: Clear visualization of proposed actions.*
-
-<!-- TODO: Insert DiffViewer Screenshot here -->
-*Diff Viewer: Strict, bounded preview of filesystem mutations.*
-
-<!-- TODO: Insert ExecutionTimeline Screenshot here -->
-*Execution Timeline: Real-time visibility into the orchestration state.*
-
----
-
-## Universal BYOK Multi-Provider Architecture
-
-The runtime features a fully realized **Bring Your Own Key (BYOK)** ecosystem, seamlessly integrating commercial models, open networks, and local inference without sacrificing trust or predictability.
-
-- **Master Key Security**: All provider credentials are encrypted locally using AES-256-GCM via a machine-independent `master.key`. We never store API keys in plaintext and never exfiltrate credentials to the cloud.
-- **Universal Abstraction**: Deep native support for Anthropic, Gemini, OpenAI-compatible APIs (OpenRouter, Groq, DeepSeek, xAI, Together, Mistral), and local endpoints (Ollama, LM Studio).
-- **Session Isolation**: Switching providers instantly wipes temporary model context, tool mappings, and streaming state to guarantee deterministic behavior and prevent cross-provider contamination.
-- **Streaming Normalization**: Disparate provider behaviors—from raw SSE chunks to reasoning blocks and fragmented tool-calls—are unified into a single, predictable terminal rendering stream.
-- **Local-First Safety**: Hardened endpoint validation specifically prevents remote URL injection attacks on localhost inference servers.
-
+### NPM Global Install
+For Node.js environments:
 ```bash
-# Terminal Native Provider Management
-/provider add openrouter     # Securely encrypts and stores key
-/provider switch deepseek    # Dynamically hot-swaps active engine
-/provider health             # Queries provider status (cached for 30s)
-/model switch claude-3-7     # Switches active model seamlessly
+npm install -g ork-cli
 ```
 
----
+## First Run
+Navigate to your target workspace and start the orchestration runtime:
+```bash
+ork --session dev
+```
 
-## Upcoming Roadmap
+On the first run, ORK will securely generate its runtime configuration (`~/.ork`) using atomic filesystem guarantees to prevent corruption.
 
-With the orchestration architecture and multi-provider foundation fully stabilized, the upcoming focus shifts toward workflow ergonomics:
+## SAFE MODE
+ORK operates under the assumption of hostility. By default, **SAFE MODE** is strictly enforced.
 
-- **Workflow Refinement**: Streamlining the terminal UI for faster approval cycles (e.g., batching trusted operations).
-- **Performance Optimization**: Reducing TUI render overhead and improving diff parsing speeds.
-- **Developer Ergonomics**: Polishing the REPL for standard coding workflows.
+When a plan is generated, ORK renders a clear `diff` of all proposed changes and waits for explicit `Y/n` approval. If you interrupt execution (`Ctrl+C`), ORK initiates an aggressive subprocess cleanup, killing all spawned trees to ensure your environment is not polluted with zombie processes.
 
----
+## Local-First Trust Guarantees
+- **Atomic Persistence**: Configurations and execution records are swapped atomically. In the event of disk exhaustion (`ENOSPC`), ORK fails gracefully instead of corrupting existing files.
+- **Strict Tree-Killing**: Spawning `git` or `npm` commands that hang? ORK's internal timeout boundaries will aggressively `SIGKILL` or `taskkill /T /F` hanging operations.
+- **Provider Agnostic**: You configure your own provider keys (Groq, Anthropic, Gemini). We don't proxy your data.
 
-## License
+## Rollback & Recovery
+While ORK validates plans strictly, the local filesystem can be unpredictable.
+Always use version control. ORK is git-aware and expects a clean git status before proposing large architectural changes. If an execution interrupts midway, simply run `git restore .` to rollback safely. 
 
-ISC
+If ORK's own configuration is corrupted by extreme chaos (e.g. power loss during write), it automatically isolates the corrupted `.json` and rebuilds a pristine state on the next boot.
+
+## Known Limitations
+For a transparent list of current known limitations, Windows edge-cases, and testing anomalies, see [KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
+
+## Reporting Bugs
+Bug reports should be technical, reproducible, and infrastructure-focused.
+If you experience a failure, please open an issue and include the `--audit` trace if applicable. See our [Issue Templates](.github/ISSUE_TEMPLATE) for requirements.
+
+## Abuse Testing
+We actively encourage breaking the runtime. Try Ctrl+C storms, massive stdout floods, or resizing your terminal continuously during execution. 
+For a structured guide on how to help us harden ORK, read the [Abuse Testing Guide](docs/ABUSE_TESTING.md).

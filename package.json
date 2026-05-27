@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc",
-    "package": "npm run build && caxa --input . --output release/ork.exe -- \"{{caxa}}/node\" \"{{caxa}}/dist/index.js\"",
+    "package": "npm run build && caxa --input . --output release/ork.exe --exclude \".git\" \"release\" \"src\" \"tests\" -- \"{{caxa}}/node_modules/.bin/node\" \"{{caxa}}/dist/index.js\"",
     "release": "node scripts/release.js",
     "test": "node --test --import tsx src/tests/*.test.ts"
   },

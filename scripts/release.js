@@ -57,7 +57,7 @@ execSync('npm run build', { stdio: 'inherit', cwd: ROOT_DIR });
 
 console.log('[Release] Packaging with CAXA...');
 // Run caxa to output to releaseDir
-const caxaCmd = `npx caxa --input . --output "${exePath}" -- "{{caxa}}/node" "{{caxa}}/dist/index.js"`;
+const caxaCmd = `npx caxa --input . --output "${exePath}" --exclude ".git" "release" "src" "tests" -- "{{caxa}}/node_modules/.bin/node" "{{caxa}}/dist/index.js"`;
 try {
     execSync(caxaCmd, { stdio: 'inherit', cwd: ROOT_DIR });
 } catch (e: any) {
