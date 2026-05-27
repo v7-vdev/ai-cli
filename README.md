@@ -4,6 +4,15 @@ A terminal-native AI developer runtime built for professional engineers who dema
 
 ---
 
+### The Core Philosophy
+1. AI proposes.
+2. Human approves.
+3. Trust is explicit.
+4. Execution never occurs silently.
+
+> [!IMPORTANT]
+> **Zero Telemetry Guarantee:** ORK is infrastructure-grade and local-first. We explicitly guarantee **Zero Telemetry**, **No Cloud Logging**, and **No Background Analytics**. Your code and infrastructure data remain strictly on your machine.
+
 ## 🛑 The Core Philosophy: "AI Proposes. Human Approves."
 
 We fundamentally reject the concept of a "fully autonomous coding agent" operating blindly in the background. Real-world engineering requires predictability and control. ORK intentionally prioritizes trust, predictability, and orchestration clarity over blind autonomy. 

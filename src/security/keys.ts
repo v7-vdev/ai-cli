@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import crypto from "crypto";
+import { writeAtomicSync } from "../utils/fs.js";
 
 const CONFIG_DIR = path.join(os.homedir(), ".ork");
 const MASTER_KEY_PATH = path.join(CONFIG_DIR, "master.key");
@@ -23,7 +24,7 @@ export class KeyManager {
             // Generate a secure 32-byte master key
             this.masterKey = crypto.randomBytes(32);
             // Save it securely (read/write only by user)
-            fs.writeFileSync(MASTER_KEY_PATH, this.masterKey, { mode: 0o600 });
+            writeAtomicSync(MASTER_KEY_PATH, this.masterKey, { mode: 0o600 });
         } else {
             try {
                 this.masterKey = fs.readFileSync(MASTER_KEY_PATH);
@@ -36,7 +37,7 @@ export class KeyManager {
         }
         
         if (!fs.existsSync(KEYS_FILE_PATH)) {
-            fs.writeFileSync(KEYS_FILE_PATH, JSON.stringify({}), { mode: 0o600 });
+            writeAtomicSync(KEYS_FILE_PATH, JSON.stringify({}), { mode: 0o600 });
         }
 
         this.initialized = true;
@@ -70,7 +71,7 @@ export class KeyManager {
         try {
             const keysData = JSON.parse(fs.readFileSync(KEYS_FILE_PATH, 'utf8'));
             keysData[providerId] = this.encrypt(apiKey);
-            fs.writeFileSync(KEYS_FILE_PATH, JSON.stringify(keysData, null, 2), { mode: 0o600 });
+            writeAtomicSync(KEYS_FILE_PATH, JSON.stringify(keysData, null, 2), { mode: 0o600 });
         } catch (error) {
             throw new Error(`Failed to save key for ${providerId}: ${(error as Error).message}`);
         }
@@ -102,10 +103,10 @@ export class KeyManager {
             const keysData = JSON.parse(fs.readFileSync(KEYS_FILE_PATH, 'utf8'));
             if (keysData[providerId]) {
                 delete keysData[providerId];
-                fs.writeFileSync(KEYS_FILE_PATH, JSON.stringify(keysData, null, 2), { mode: 0o600 });
+                writeAtomicSync(KEYS_FILE_PATH, JSON.stringify(keysData, null, 2), { mode: 0o600 });
             }
         } catch (error) {
-            // ignore JSON parse errors on remove
+            throw new Error(`Failed to remove key for ${providerId}: ${(error as Error).message}`);
         }
     }
 

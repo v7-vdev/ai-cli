@@ -62,7 +62,11 @@ export class RuntimeContext {
         this.initSystemPrompt();
     }
 
+    private isShuttingDown = false;
+
     public async shutdown(hard: boolean = false) {
+        if (this.isShuttingDown) return;
+        this.isShuttingDown = true;
         this.logger.log("INFO", "SYSTEM", "Graceful shutdown initiated by process signal");
         
         // Trigger abort controller to sever active streams

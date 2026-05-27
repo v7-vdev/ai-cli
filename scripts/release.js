@@ -22,12 +22,35 @@ if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir);
 const exeName = `ork-v${version}-windows-x64.exe`;
 const exePath = path.join(releaseDir, exeName);
 
-// Backup previous release if exists
+// Backup previous release if exists and prune stale backups (cap at 3)
 if (fs.existsSync(exePath)) {
-    const backupPath = path.join(backupDir, `${exeName}.bak`);
+    const backupPath = path.join(backupDir, `${exeName}-${Date.now()}.bak`);
     console.log(`[Release] Backing up previous binary to ${backupPath}...`);
     fs.copyFileSync(exePath, backupPath);
 }
+
+const backups = fs.readdirSync(backupDir).filter(f => f.endsWith('.bak')).sort((a, b) => {
+    const timeA = parseInt(a.split('-').pop() || '0');
+    const timeB = parseInt(b.split('-').pop() || '0');
+    return timeB - timeA;
+});
+
+if (backups.length > 3) {
+    for (let i = 3; i < backups.length; i++) {
+        fs.unlinkSync(path.join(backupDir, backups[i]));
+    }
+}
+
+// Generate Reproducibility Manifest
+const manifestPath = path.join(releaseDir, 'release-manifest.json');
+const manifest = {
+    version: version,
+    timestamp: new Date().toISOString(),
+    node_version: process.version,
+    platform: process.platform,
+    arch: process.arch
+};
+fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 
 console.log('[Release] Building TypeScript source...');
 execSync('npm run build', { stdio: 'inherit', cwd: ROOT_DIR });
