@@ -22,7 +22,6 @@ export function killAllChildren() {
 }
 
 function tokenizeCommand(command: string): string[] {
-    // Basic tokenizer that handles quotes (single and double)
     const tokens: string[] = [];
     let currentToken = "";
     let inQuotes: string | null = null;
@@ -32,13 +31,13 @@ function tokenizeCommand(command: string): string[] {
         
         if (inQuotes) {
             if (char === inQuotes) {
-                inQuotes = null; // Close quote
+                inQuotes = null;
             } else {
                 currentToken += char;
             }
         } else {
             if (char === "'" || char === '"') {
-                inQuotes = char; // Open quote
+                inQuotes = char;
             } else if (char === " " || char === "\t") {
                 if (currentToken.length > 0) {
                     tokens.push(currentToken);
@@ -57,61 +56,119 @@ function tokenizeCommand(command: string): string[] {
     return tokens;
 }
 
-export async function runCommand(command: string): Promise<{ success: boolean; output: string }> {
-    if (hasShellOperators(command)) {
+export interface RunCommandOptions {
+    cwd?: string;
+    timeoutMs?: number;
+}
+
+export interface RunCommandResult {
+    success: boolean;
+    output: string;
+    stdout: string;
+    stderr: string;
+    code: number | null;
+}
+
+export async function runCommand(command: string | string[], options?: RunCommandOptions): Promise<RunCommandResult> {
+    if (typeof command === "string" && hasShellOperators(command)) {
         return {
             success: false,
-            output: "Error: Shell operators (chaining, piping, redirection) are strictly blocked by the security runtime. Use simple sequential commands instead."
+            output: "Error: Shell operators (chaining, piping, redirection) are strictly blocked by the security runtime. Use simple sequential commands instead.",
+            stdout: "",
+            stderr: "Error: Shell operators blocked",
+            code: 1
         };
     }
 
-    const tokens = tokenizeCommand(command);
+    const tokens = Array.isArray(command) ? command : tokenizeCommand(command);
     if (tokens.length === 0) {
-        return { success: false, output: "Empty command." };
+        return { success: false, output: "Empty command.", stdout: "", stderr: "", code: 1 };
     }
 
     const cmd = tokens[0];
     const args = tokens.slice(1);
 
     if (!cmd) {
-        return { success: false, output: "Empty command." };
+        return { success: false, output: "Empty command.", stdout: "", stderr: "", code: 1 };
     }
 
     return new Promise((resolve) => {
         try {
-            const child = spawn(cmd, args, { cwd: process.cwd(), shell: false, detached: process.platform !== "win32" });
+            const child = spawn(cmd, args, { 
+                cwd: options?.cwd || process.cwd(), 
+                shell: false, 
+                detached: process.platform !== "win32",
+                windowsHide: true
+            });
+            
             activeProcesses.add(child);
             
-            let output = "";
-            let errorOutput = "";
+            let stdoutData = "";
+            let stderrData = "";
+            let timeoutHandle: NodeJS.Timeout | null = null;
+
+            if (options?.timeoutMs) {
+                timeoutHandle = setTimeout(() => {
+                    if (!child.killed && child.pid) {
+                        try {
+                            if (process.platform === "win32") {
+                                execSync(`taskkill /pid ${child.pid} /T /F`, { stdio: "ignore" });
+                            } else {
+                                process.kill(-child.pid, "SIGKILL");
+                            }
+                        } catch {
+                            // ignore
+                        }
+                    }
+                    activeProcesses.delete(child);
+                    resolve({
+                        success: false,
+                        output: `Error: Command timed out after ${options.timeoutMs}ms.\n` + stdoutData + "\n" + stderrData,
+                        stdout: stdoutData,
+                        stderr: `Error: Command timed out after ${options.timeoutMs}ms.\n` + stderrData,
+                        code: 1
+                    });
+                }, options.timeoutMs);
+            }
 
             if (child.stdout) {
                 child.stdout.on("data", (data: any) => {
-                    output += data.toString();
+                    stdoutData += data.toString();
                 });
             }
 
             if (child.stderr) {
                 child.stderr.on("data", (data: any) => {
-                    errorOutput += data.toString();
+                    stderrData += data.toString();
                 });
             }
 
             child.on("error", (err: any) => {
+                if (timeoutHandle) clearTimeout(timeoutHandle);
                 activeProcesses.delete(child);
-                resolve({ success: false, output: `Error: ${err.message}` });
+                resolve({ 
+                    success: false, 
+                    output: `Error: ${err.message}`,
+                    stdout: stdoutData,
+                    stderr: `Error: ${err.message}\n${stderrData}`,
+                    code: 1
+                });
             });
 
             child.on("close", (code: number | null) => {
+                if (timeoutHandle) clearTimeout(timeoutHandle);
                 activeProcesses.delete(child);
-                const finalOutput = (output + "\n" + errorOutput).trim();
+                const finalOutput = (stdoutData + "\n" + stderrData).trim();
                 resolve({
                     success: code === 0,
-                    output: finalOutput || (code !== 0 ? `Command exited with code ${code}` : "Success")
+                    output: finalOutput || (code !== 0 ? `Command exited with code ${code}` : "Success"),
+                    stdout: stdoutData,
+                    stderr: stderrData,
+                    code
                 });
             });
         } catch (err: any) {
-            resolve({ success: false, output: `Error: ${err.message}` });
+            resolve({ success: false, output: `Error: ${err.message}`, stdout: "", stderr: err.message, code: 1 });
         }
     });
 }

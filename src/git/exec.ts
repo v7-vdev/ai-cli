@@ -1,8 +1,5 @@
-import { exec } from "child_process";
-import { promisify } from "util";
+import { runCommand } from "../tools/runCommand.js";
 import { AuditLogger } from "../logs/auditLogger.js";
-
-const execAsync = promisify(exec);
 
 // In-memory cache for git availability per session
 let gitAvailableCache: boolean | null = null;
@@ -22,8 +19,11 @@ export async function isGitAvailable(options: GitExecOptions): Promise<boolean> 
     }
 
     try {
-        await execAsync("git --version", { timeout: 2000, cwd: options.cwd });
-        gitAvailableCache = true;
+        const result = await runCommand(["git", "--version"], { cwd: options.cwd, timeoutMs: 2000 });
+        gitAvailableCache = result.success;
+        if (!gitAvailableCache) {
+            options.logger?.log("WARN", "GIT", "Git executable not found or inaccessible in environment.");
+        }
     } catch {
         gitAvailableCache = false;
         options.logger?.log("WARN", "GIT", "Git executable not found or inaccessible in environment.");
@@ -42,20 +42,26 @@ export async function execGit(args: string[], options: GitExecOptions): Promise<
     }
 
     const timeout = options.timeoutMs || 2000;
-    const command = `git ${args.join(" ")}`;
+    const commandArray = ["git", ...args];
+    const commandStr = `git ${args.join(" ")}`;
 
     try {
-        const result = await execAsync(command, {
+        const result = await runCommand(commandArray, {
             cwd: options.cwd,
-            timeout,
-            windowsHide: true
+            timeoutMs: timeout
         });
+        
+        if (!result.success) {
+            options.logger?.log("WARN", "GIT", `Git command failed: ${commandStr} - ${result.stderr || result.output}`);
+            throw new Error(result.stderr || result.output);
+        }
+        
         return {
             stdout: result.stdout.trim(),
             stderr: result.stderr.trim()
         };
     } catch (error: any) {
-        options.logger?.log("WARN", "GIT", `Git command failed: ${command} - ${error.message}`);
+        options.logger?.log("WARN", "GIT", `Git command failed: ${commandStr} - ${error.message}`);
         throw error;
     }
 }
