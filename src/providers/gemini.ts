@@ -34,8 +34,9 @@ export class GeminiProvider implements AIProvider {
         });
     }
 
-    async chat(messages: Message[], tools?: GenericTool[]): Promise<ChatResponse> {
-        this.abortController = new AbortController();
+    async chat(messages: Message[], tools?: GenericTool[], signal?: AbortSignal): Promise<ChatResponse> {
+        this.abortController = signal ? { signal, abort: () => {} } as any : new AbortController();
+        const activeSignal = signal || this.abortController?.signal;
         try {
             const contents = messages.map(msg => {
                 const role = msg.role === 'system' ? 'user' : msg.role;
@@ -62,7 +63,7 @@ export class GeminiProvider implements AIProvider {
             const response = await this.ai.models.generateContent({
                 model: this.model,
                 contents: contents,
-                config: { tools: geminiTools }
+                config: { tools: geminiTools, httpOptions: { signal: activeSignal as any } } as any
             });
 
             const fnCall = response.functionCalls?.[0];
@@ -80,11 +81,10 @@ export class GeminiProvider implements AIProvider {
         }
     }
 
-    async stream(messages: Message[], tools?: GenericTool[], onChunk?: (chunk: string) => void): Promise<ChatResponse> {
-        this.abortController = new AbortController();
+    async stream(messages: Message[], tools?: GenericTool[], onChunk?: (chunk: string) => void, signal?: AbortSignal): Promise<ChatResponse> {
+        this.abortController = signal ? { signal, abort: () => {} } as any : new AbortController();
+        const activeSignal = signal || this.abortController?.signal;
         try {
-            // Note: GoogleGenAI streaming uses an async iterator. We just simulate it here
-            // using the simple stream interface for the new SDK, since `generateContentStream` works similarly.
             const contents = messages.map(msg => {
                 const role = msg.role === 'system' ? 'user' : msg.role;
                 const parts: any[] = [];
@@ -95,6 +95,7 @@ export class GeminiProvider implements AIProvider {
             const responseStream = await this.ai.models.generateContentStream({
                 model: this.model,
                 contents: contents,
+                config: { httpOptions: { signal: activeSignal as any } } as any
             });
 
             const normalizer = new StreamNormalizer("gemini");

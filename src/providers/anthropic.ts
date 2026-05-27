@@ -64,8 +64,9 @@ export class AnthropicProvider implements AIProvider {
         }));
     }
 
-    async chat(messages: Message[], tools?: GenericTool[]): Promise<ChatResponse> {
-        this.abortController = new AbortController();
+    async chat(messages: Message[], tools?: GenericTool[], signal?: AbortSignal): Promise<ChatResponse> {
+        if (!signal) this.abortController = new AbortController();
+        const activeSignal = signal || this.abortController?.signal;
         try {
             const systemMessages = messages.filter(m => m.role === "system").map(m => m.content).join("\n");
             const anthropicMessages = this.convertMessages(messages);
@@ -82,7 +83,7 @@ export class AnthropicProvider implements AIProvider {
             }
 
             const response = await this.ai.messages.create(requestPayload, {
-                signal: this.abortController.signal as any
+                signal: activeSignal as any
             });
 
             let text = "";
@@ -114,8 +115,9 @@ export class AnthropicProvider implements AIProvider {
         }
     }
 
-    async stream(messages: Message[], tools?: GenericTool[], onChunk?: (chunk: string) => void): Promise<ChatResponse> {
-        this.abortController = new AbortController();
+    async stream(messages: Message[], tools?: GenericTool[], onChunk?: (chunk: string) => void, signal?: AbortSignal): Promise<ChatResponse> {
+        if (!signal) this.abortController = new AbortController();
+        const activeSignal = signal || this.abortController?.signal;
         try {
             const systemMessages = messages.filter(m => m.role === "system").map(m => m.content).join("\n");
             const requestPayload: any = {
@@ -129,7 +131,7 @@ export class AnthropicProvider implements AIProvider {
             if (anthropicTools) requestPayload.tools = anthropicTools;
 
             const stream = await this.ai.messages.create(requestPayload, {
-                signal: this.abortController.signal as any
+                signal: activeSignal as any
             });
 
             const normalizer = new StreamNormalizer("anthropic");

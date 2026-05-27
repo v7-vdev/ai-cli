@@ -49,10 +49,43 @@ export async function renderApp(isDryRun: boolean = false) {
 
     const { unmount, clear } = render(<AppLayout ctx={ctx} toolExecutor={toolExecutor} />, { exitOnCtrlC: false });
 
+    let shutdownInProgress = false;
+    let ctrlCPressedOnce = false;
+    let ctrlCTimer: NodeJS.Timeout | null = null;
+
     const handleGracefulShutdown = async () => {
+        if (shutdownInProgress) return;
+
+        if (!ctrlCPressedOnce) {
+            // First Ctrl+C: abort active orchestration, but keep REPL alive
+            ctrlCPressedOnce = true;
+            ctx.abortController.abort(); // Cancel streams immediately
+            // Re-create a fresh abort controller for the next execution
+            ctx.abortController = new AbortController();
+            
+            if (ctx.pipeline) {
+                ctx.pipeline.abort();
+            }
+
+            console.log(chalk.yellow('\n⚠ Orchestration interrupted. Press Ctrl+C again to exit.'));
+
+            ctrlCTimer = setTimeout(() => {
+                ctrlCPressedOnce = false;
+            }, 2000); // 2 second window for double Ctrl+C
+            return;
+        }
+
+        // Second Ctrl+C: Hard shutdown
+        shutdownInProgress = true;
+        if (ctrlCTimer) clearTimeout(ctrlCTimer);
+        
+        console.log(chalk.red('\n✖ Shutting down ORK runtime...'));
         clear();
         unmount();
-        await ctx.shutdown();
+        await ctx.shutdown(true);
+        
+        // Ensure cursor is visible and terminal is sane before exiting
+        process.stdout.write('\x1B[?25h'); 
         process.exit(0);
     };
 

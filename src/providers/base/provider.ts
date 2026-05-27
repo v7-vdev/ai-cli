@@ -46,8 +46,8 @@ export interface ProviderMetadata {
 }
 
 export interface AIProvider {
-    chat(messages: Message[], tools?: GenericTool[]): Promise<ChatResponse>;
-    stream?(messages: Message[], tools?: GenericTool[], onChunk?: (chunk: string) => void): Promise<ChatResponse>;
+    chat(messages: Message[], tools?: GenericTool[], signal?: AbortSignal): Promise<ChatResponse>;
+    stream?(messages: Message[], tools?: GenericTool[], onChunk?: (chunk: string) => void, signal?: AbortSignal): Promise<ChatResponse>;
     setModel(modelName: string): void;
     getAvailableModels(): { value: string, label: string }[];
     getMetadata(): ProviderMetadata;

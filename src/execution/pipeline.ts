@@ -21,7 +21,7 @@ export interface ApprovalRequest {
 export class ExecutionPipeline {
     private ctx: RuntimeContext;
     private _isDryRun: boolean = false;
-    public isSafeMode: boolean = false;
+    public isSafeMode: boolean = true;
     private aborted: boolean = false;
     private approvalHandler?: (request: ApprovalRequest) => void;
     private approvalQueue = new ApprovalQueue();

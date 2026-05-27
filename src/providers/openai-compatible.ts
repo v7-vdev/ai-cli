@@ -79,24 +79,26 @@ export class OpenAICompatibleProvider implements AIProvider {
         }
     }
 
-    async chat(messages: Message[], tools?: GenericTool[]): Promise<ChatResponse> {
-        this.abortController = new AbortController();
-        const payload = {
-            model: this.model,
-            messages: this.convertMessages(messages),
-            tools: this.convertTools(tools),
-            stream: false
-        };
-
+    async chat(messages: Message[], tools?: GenericTool[], signal?: AbortSignal): Promise<ChatResponse> {
+        this.abortController = signal ? { signal, abort: () => {} } as any : new AbortController();
+        const activeSignal = signal || this.abortController?.signal;
         try {
+            const requestPayload: any = {
+                model: this.model,
+                messages: this.convertMessages(messages),
+                stream: false
+            };
+            const oaiTools = this.convertTools(tools);
+            if (oaiTools) requestPayload.tools = oaiTools;
+
             const response = await fetch(`${this.config.baseURL}/chat/completions`, {
-                method: "POST",
+                method: 'POST',
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${this.config.apiKey}`
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.config.apiKey}`
                 },
-                body: JSON.stringify(payload),
-                signal: this.abortController.signal
+                body: JSON.stringify(requestPayload),
+                signal: activeSignal || null
             });
 
             if (!response.ok) {
@@ -135,24 +137,27 @@ export class OpenAICompatibleProvider implements AIProvider {
         }
     }
 
-    async stream(messages: Message[], tools?: GenericTool[], onChunk?: (chunk: string) => void): Promise<ChatResponse> {
-        this.abortController = new AbortController();
-        const payload = {
-            model: this.model,
-            messages: this.convertMessages(messages),
-            tools: this.convertTools(tools),
-            stream: true
-        };
-
+    async stream(messages: Message[], tools?: GenericTool[], onChunk?: (chunk: string) => void, signal?: AbortSignal): Promise<ChatResponse> {
+        this.abortController = signal ? { signal, abort: () => {} } as any : new AbortController();
+        const activeSignal = signal || this.abortController?.signal;
+        
         try {
+            const requestPayload: any = {
+                model: this.model,
+                messages: this.convertMessages(messages),
+                stream: true
+            };
+            const oaiTools = this.convertTools(tools);
+            if (oaiTools) requestPayload.tools = oaiTools;
+
             const response = await fetch(`${this.config.baseURL}/chat/completions`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${this.config.apiKey}`
                 },
-                body: JSON.stringify(payload),
-                signal: this.abortController.signal
+                body: JSON.stringify(requestPayload),
+                signal: activeSignal || null
             });
 
             if (!response.ok) {

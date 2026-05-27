@@ -67,7 +67,7 @@ export function useChat(ctx: RuntimeContext, toolExecutor: ToolExecutor) {
                     const mcpTools = await ctx.mcp.getMcpTools();
                     const allTools = [...nativeTools, ...mcpTools];
 
-                    const response = await ctx.provider.chat(ctx.history, allTools);
+                    const response = await ctx.provider.chat(ctx.history, allTools, ctx.abortController.signal);
 
                     if (response.text && response.text !== "No response text.") {
                         addMessage({ role: 'model', content: response.text });

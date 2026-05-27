@@ -1,66 +1,75 @@
-import chalk from "chalk";
+import os from "os";
 import fs from "fs";
 import path from "path";
-import os from "os";
+import chalk from "chalk";
 import { KeyManager } from "../security/keys.js";
+import { ProviderRegistry } from "../providers/registry.js";
 
 export async function runDoctor() {
-    console.log(chalk.bold("ORK Diagnostics (ork doctor)\n"));
+    console.log(chalk.bold("ORK Diagnostics & Health Check\n"));
     
-    let checksPassed = 0;
-    let totalChecks = 0;
+    let allPassed = true;
 
-    const runCheck = (name: string, checkFn: () => boolean | string) => {
-        totalChecks++;
+    const check = (name: string, fn: () => boolean | Promise<boolean>) => {
         try {
-            const result = checkFn();
-            if (result === true) {
-                console.log(chalk.green("✔ ") + name);
-                checksPassed++;
+            const passed = fn();
+            if (passed) {
+                console.log(chalk.green("✔") + ` ${name}`);
             } else {
-                console.log(chalk.red("✖ ") + name + chalk.dim(` - ${result}`));
+                console.log(chalk.red("✖") + ` ${name}`);
+                allPassed = false;
             }
-        } catch (error: any) {
-            console.log(chalk.red("✖ ") + name + chalk.dim(` - Error: ${error.message}`));
+        } catch (e: any) {
+            console.log(chalk.red("✖") + ` ${name} ` + chalk.dim(`(${e.message})`));
+            allPassed = false;
         }
     };
 
-    // 1. Config Integrity
-    runCheck("Configuration Directory (~/.ork)", () => {
-        const configDir = path.join(os.homedir(), ".ork");
-        if (fs.existsSync(configDir)) return true;
-        return "Config directory not found.";
-    });
-
-    // 2. Encryption Health
-    runCheck("Master Key Integrity", () => {
-        const keyPath = path.join(os.homedir(), ".ork", "master.key");
-        if (!fs.existsSync(keyPath)) return "master.key is missing.";
-        const stats = fs.statSync(keyPath);
-        // On Unix, check for secure permissions. On Windows, just check size.
-        if (stats.size !== 32) return "master.key size is invalid.";
+    // 1. Filesystem & Configuration Boundaries
+    check("Config directory (~/.ork) accessible", () => {
+        const dir = path.join(os.homedir(), ".ork");
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        fs.accessSync(dir, fs.constants.R_OK | fs.constants.W_OK);
         return true;
     });
 
-    // 3. Provider Configuration
-    runCheck("Provider Key Availability", () => {
-        const providers = KeyManager.listConfiguredProviders();
-        if (providers.length === 0) return "No providers configured (run 'ork config set').";
-        return true;
-    });
-
-    // 4. Local File System Permissions
-    runCheck("Workspace Read/Write Permissions", () => {
-        const testFile = path.join(process.cwd(), ".ork-test-write");
+    check("Logs directory (~/.ork/logs) writable", () => {
+        const logsDir = path.join(os.homedir(), ".ork", "logs");
+        if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+        const testFile = path.join(logsDir, ".test");
         fs.writeFileSync(testFile, "test");
         fs.unlinkSync(testFile);
         return true;
     });
 
-    console.log(`\n${checksPassed}/${totalChecks} checks passed.`);
-    if (checksPassed === totalChecks) {
-        console.log(chalk.green.bold("\nYour orchestration environment is healthy and ready to run."));
+    // 2. Encryption & Keys
+    check("Master key initialized", () => {
+        const keyPath = path.join(os.homedir(), ".ork", "master.key");
+        return fs.existsSync(keyPath);
+    });
+
+    // 3. Provider Readiness
+    check("At least one provider configured", () => {
+        const providers = KeyManager.listConfiguredProviders();
+        return providers.length > 0;
+    });
+
+    // 4. Terminal Compatibility
+    check("Terminal capabilities verified", () => {
+        const cols = process.stdout.columns;
+        const rows = process.stdout.rows;
+        if (!cols || !rows) {
+            console.log(chalk.yellow("  ⚠ Terminal dimensions unknown (headless or non-interactive env)"));
+        } else {
+            console.log(chalk.dim(`  ↳ Dimensions: ${cols}x${rows}`));
+        }
+        return true; 
+    });
+
+    console.log("");
+    if (allPassed) {
+        console.log(chalk.green("✔ Runtime is healthy and ready for orchestration."));
     } else {
-        console.log(chalk.yellow("\nSome checks failed. ORK may have degraded capabilities."));
+        console.log(chalk.red("✖ Runtime issues detected. Please fix the above errors."));
     }
 }

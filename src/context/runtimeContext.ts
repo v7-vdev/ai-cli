@@ -18,6 +18,7 @@ export class RuntimeContext {
     public workspace?: WorkspaceMetadata;
     public git?: GitMetadata;
     public pipeline: ExecutionPipeline;
+    public abortController: AbortController = new AbortController();
 
     // A reference to the command parser so commands can dynamically trigger other commands
     // We type it as 'any' or a function to avoid circular dependencies
@@ -60,11 +61,18 @@ export class RuntimeContext {
         this.initSystemPrompt();
     }
 
-    public async shutdown() {
+    public async shutdown(hard: boolean = false) {
         this.logger.log("INFO", "SYSTEM", "Graceful shutdown initiated by process signal");
+        
+        // Trigger abort controller to sever active streams
+        this.abortController.abort();
+        
+        // Also abort pipeline
         if (this.pipeline && typeof this.pipeline.abort === 'function') {
             this.pipeline.abort();
         }
+        
+        // Disconnect MCP servers safely
         if (this.mcp) {
             await this.mcp.disconnectAll();
         }
