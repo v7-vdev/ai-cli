@@ -44,10 +44,15 @@ ORK operates under the assumption of hostility. By default, **SAFE MODE** is str
 
 When a plan is generated, ORK renders a clear `diff` of all proposed changes and waits for explicit `Y/n` approval. If you interrupt execution (`Ctrl+C`), ORK initiates an aggressive subprocess cleanup, killing all spawned trees to ensure your environment is not polluted with zombie processes.
 
-## Local-First Trust Guarantees
-- **Atomic Persistence**: Configurations and execution records are swapped atomically. In the event of disk exhaustion (`ENOSPC`), ORK fails gracefully instead of corrupting existing files.
-- **Strict Tree-Killing**: Spawning `git` or `npm` commands that hang? ORK's internal timeout boundaries will aggressively `SIGKILL` or `taskkill /T /F` hanging operations.
-- **Provider Agnostic**: You configure your own provider keys (Groq, Anthropic, Gemini). We don't proxy your data.
+## Security & Chaos Resilience
+ORK has undergone extensive Red Team and Chaos Engineering hardening. It survives adversarial environments, malformed provider outputs, and abusive user interruptions.
+
+- **Strict Path Boundaries**: Path traversal out of your local workspace is cryptographically audited and physically impossible via phantom symlinks or prefix escapes.
+- **Asynchronous Execution Limiter**: Malicious prompts spawning 50 parallel terminal tools? ORK queues them behind a strict global execution semaphore, guaranteeing zero out-of-memory (OOM) deadlocks.
+- **Atomic File Persistence**: Configurations and keys are swapped using asynchronous exponential backoff loops that gracefully bypass Windows Defender locks.
+- **Config Quarantine**: Power loss corrupted your `keys.json`? The startup bootstrap automatically detects, quarantines (`.corrupt`), and rebuilds pristine states without crashing.
+- **Secret Redaction**: Any embedded `.env` or provider credentials captured in stdout streams are actively redacted in real-time before hitting your terminal or log files.
+- **Terminal Recovery Guarantee**: Aggressive `process.on('exit')` and SIGTERM listeners guarantee that your cursor and terminal alternate-buffer are perfectly restored even if Node is force-killed.
 
 ## Rollback & Recovery
 While ORK validates plans strictly, the local filesystem can be unpredictable.
