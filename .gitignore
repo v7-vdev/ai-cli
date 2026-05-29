@@ -4,3 +4,5 @@ dist
 .ai-cli/
 bin/
 ork*
+.ork/
+.jetro/

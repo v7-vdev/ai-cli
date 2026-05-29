@@ -2,6 +2,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import fs from "fs";
 import path from "path";
+import { writeAtomicSync } from "../utils/fs.js";
 
 export interface McpServerConfig {
     command: string;
@@ -34,7 +35,7 @@ export class McpManager {
     }
 
     private saveConfig(config: McpConfig) {
-        fs.writeFileSync(this.configPath, JSON.stringify(config, null, 2));
+        writeAtomicSync(this.configPath, JSON.stringify(config, null, 2));
     }
 
     async connectAll() {

@@ -29,10 +29,10 @@ export function generateDiff(filePath: string, newContent: string): DiffResult {
         };
     }
 
-    if (newContent.length > 500000 || oldContent.length > 500000) {
+    if (newContent.length > 1024 * 1024 || oldContent.length > 1024 * 1024) {
         return {
             isLarge: true,
-            summary: `File is too large for granular diff generation. Target size: ${(newContent.length / 1024).toFixed(2)} KB.`
+            summary: `File too large for inline diff. Target size: ${(newContent.length / 1024 / 1024).toFixed(2)} MB.`
         };
     }
 

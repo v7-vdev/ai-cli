@@ -1,10 +1,12 @@
 import fs from "fs";
 import path from "path";
 import { globalHashCache } from "../execution/hashCache.js";
+import { validateWorkspacePath } from "../security/paths.js";
+import { writeAtomic } from "../utils/fs.js";
 
-export function writeFile(filePath: string, content: string, overwrite = false) {
+export async function writeFile(filePath: string, content: string, overwrite = false) {
   try {
-    const absolutePath = path.resolve(process.cwd(), filePath);
+    const absolutePath = validateWorkspacePath(filePath);
     const fileExists = fs.existsSync(absolutePath);
 
     if (fileExists && !overwrite) {
@@ -12,7 +14,7 @@ export function writeFile(filePath: string, content: string, overwrite = false) 
     }
 
     if (fileExists && overwrite) {
-        const currentContent = fs.readFileSync(absolutePath, "utf-8");
+        const currentContent = await fs.promises.readFile(absolutePath, "utf-8");
         const currentHash = globalHashCache.calculateHash(currentContent);
         const expectedHash = globalHashCache.getHash(absolutePath);
         
@@ -26,7 +28,7 @@ export function writeFile(filePath: string, content: string, overwrite = false) 
       fs.mkdirSync(dir, { recursive: true });
     }
 
-    fs.writeFileSync(absolutePath, content);
+    await writeAtomic(absolutePath, content);
     globalHashCache.setHash(absolutePath, content);
 
     return fileExists ? "UPDATED" : "CREATED";

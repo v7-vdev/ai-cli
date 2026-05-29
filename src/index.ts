@@ -24,14 +24,27 @@ if (!fs.existsSync(logsDir)) {
     fs.mkdirSync(logsDir, { recursive: true, mode: 0o700 });
 }
 
+import { redactSecrets } from "./security/secrets.js";
+
+function emergencyRestore() {
+    try {
+        process.stdout.write("\x1B[?25h"); // Show cursor
+        process.stdout.write("\x1B[0m");   // Reset formatting
+        process.stdout.write("\x1B[?1049l"); // Exit alternate screen
+    } catch {}
+}
+
 function writeCrashLog(err: Error, type: string) {
+    emergencyRestore();
     const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const logPath = path.join(logsDir, `crash-${timestamp}.log`);
-    const content = `ORK CRASH LOG - ${type}\n` +
-                    `Timestamp: ${new Date().toISOString()}\n` +
-                    `Error: ${err.message}\n` +
-                    `Stack: ${err.stack}\n`;
-    fs.writeFileSync(logPath, content);
+    const content = redactSecrets(
+        `ORK CRASH LOG - ${type}\n` +
+        `Timestamp: ${new Date().toISOString()}\n` +
+        `Error: ${err.message}\n` +
+        `Stack: ${err.stack}\n`
+    );
+    try { fs.writeFileSync(logPath, content); } catch {}
     console.error(`\n[ORK PANIC] A critical error occurred. Trace written to: ${logPath}`);
     process.exit(1);
 }
@@ -40,6 +53,9 @@ process.on("uncaughtException", (err) => writeCrashLog(err, "uncaughtException")
 process.on("unhandledRejection", (reason) => {
     writeCrashLog(reason instanceof Error ? reason : new Error(String(reason)), "unhandledRejection");
 });
+process.on("exit", emergencyRestore);
+process.on("SIGINT", () => { emergencyRestore(); process.exit(130); });
+process.on("SIGTERM", () => { emergencyRestore(); process.exit(143); });
 
 const args = process.argv.slice(2);
 

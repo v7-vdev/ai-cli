@@ -43,6 +43,19 @@ export class KeyManager {
         this.initialized = true;
     }
 
+    private static readKeysData(): any {
+        try {
+            return JSON.parse(fs.readFileSync(KEYS_FILE_PATH, 'utf8'));
+        } catch (error: any) {
+            console.error(`\n[ORK RECOVERY] keys.json is corrupted (${error.message}). Quarantining to keys.json.corrupt and initializing fresh state.`);
+            try {
+                fs.renameSync(KEYS_FILE_PATH, `${KEYS_FILE_PATH}.corrupt.${Date.now()}`);
+            } catch {}
+            writeAtomicSync(KEYS_FILE_PATH, JSON.stringify({}), { mode: 0o600 });
+            return {};
+        }
+    }
+
     private static encrypt(text: string): { ciphertext: string, iv: string, authTag: string } {
         if (!this.masterKey) throw new Error("Master key not initialized");
         const iv = crypto.randomBytes(12);
@@ -69,7 +82,7 @@ export class KeyManager {
     public static setKey(providerId: string, apiKey: string): void {
         this.init();
         try {
-            const keysData = JSON.parse(fs.readFileSync(KEYS_FILE_PATH, 'utf8'));
+            const keysData = this.readKeysData();
             keysData[providerId] = this.encrypt(apiKey);
             writeAtomicSync(KEYS_FILE_PATH, JSON.stringify(keysData, null, 2), { mode: 0o600 });
         } catch (error) {
@@ -84,7 +97,7 @@ export class KeyManager {
         if (envKey) return envKey;
 
         try {
-            const keysData = JSON.parse(fs.readFileSync(KEYS_FILE_PATH, 'utf8'));
+            const keysData = this.readKeysData();
             if (keysData[providerId]) {
                 return this.decrypt(keysData[providerId]);
             }
@@ -100,7 +113,7 @@ export class KeyManager {
     public static removeKey(providerId: string): void {
         this.init();
         try {
-            const keysData = JSON.parse(fs.readFileSync(KEYS_FILE_PATH, 'utf8'));
+            const keysData = this.readKeysData();
             if (keysData[providerId]) {
                 delete keysData[providerId];
                 writeAtomicSync(KEYS_FILE_PATH, JSON.stringify(keysData, null, 2), { mode: 0o600 });
@@ -113,7 +126,7 @@ export class KeyManager {
     public static listConfiguredProviders(): string[] {
         this.init();
         try {
-            const keysData = JSON.parse(fs.readFileSync(KEYS_FILE_PATH, 'utf8'));
+            const keysData = this.readKeysData();
             return Object.keys(keysData);
         } catch (error) {
             return [];

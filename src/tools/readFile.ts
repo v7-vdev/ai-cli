@@ -1,12 +1,25 @@
 import fs from "fs";
-import path from "path";
 import { globalHashCache } from "../execution/hashCache.js";
+import { validateWorkspacePath } from "../security/paths.js";
 
-export function readFile(filePath: string) {
+const MAX_READ_SIZE = 1 * 1024 * 1024; // 1MB
+
+export async function readFile(filePath: string) {
   try {
-    const absolutePath = path.resolve(process.cwd(), filePath);
-    const content = fs.readFileSync(absolutePath, "utf-8");
-    
+    const absolutePath = validateWorkspacePath(filePath);
+    const stats = await fs.promises.stat(absolutePath);
+
+    if (stats.size > MAX_READ_SIZE) {
+        // Stream the hash calculation to avoid loading into memory
+        const hash = await globalHashCache.calculateHashFile(absolutePath);
+        globalHashCache.setHash(absolutePath, hash, true);
+        return {
+            success: false,
+            content: `Error: File is too large (${(stats.size/1024/1024).toFixed(2)}MB). Maximum allowed size for direct AI reading is 1MB. Use shell commands (like 'head' or 'grep') to inspect specific parts if needed. File state cached for write verification.`,
+        };
+    }
+
+    const content = await fs.promises.readFile(absolutePath, "utf-8");
     globalHashCache.setHash(absolutePath, content);
 
     return {

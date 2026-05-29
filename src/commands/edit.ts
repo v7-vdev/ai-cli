@@ -25,7 +25,7 @@ export const editCommand: Command = {
             return;
         }
 
-        const readRes = readFile(file);
+        const readRes = await readFile(file);
         if (!readRes.success) {
             console.log(chalk.red(`✖ Failed to read ${file}: ${readRes.content}`));
             return;
@@ -107,7 +107,7 @@ export const editCommand: Command = {
         }
 
         // Overwrite
-        const writeRes = writeFile(file, newContent, true);
+        const writeRes = await writeFile(file, newContent, true);
         if (writeRes === "CREATED" || writeRes === "EXISTS") {
             console.log(chalk.green(`✔ Successfully edited ${file}`));
             ctx.addMessage({

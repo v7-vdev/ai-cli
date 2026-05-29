@@ -63,7 +63,8 @@ export class StreamNormalizer {
         
         if (this.currentToolCall) {
             try {
-                const args = JSON.parse(this.currentToolCall.argsString || "{}");
+                let args = {};
+                try { args = JSON.parse(this.currentToolCall.argsString || "{}"); } catch {}
                 events.push({
                     type: 'tool_call',
                     toolCall: {
@@ -87,7 +88,7 @@ export class StreamNormalizer {
             try {
                 res.functionCall = {
                     name: this.currentToolCall.name,
-                    args: JSON.parse(this.currentToolCall.argsString || "{}")
+                    args: (() => { try { return JSON.parse(this.currentToolCall.argsString || "{}"); } catch { return {}; } })()
                 };
             } catch (e) {
                 // Return as text if it fails to parse

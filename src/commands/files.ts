@@ -14,7 +14,7 @@ export const readCommand: Command = {
             console.log(chalk.red("Usage: /read <file>"));
             return;
         }
-        const readRes = readFile(argStr);
+        const readRes = await readFile(argStr);
         if (readRes.success) {
             console.log(chalk.green(`✔ Read ${argStr} successfully.`));
             ctx.addMessage({
@@ -73,7 +73,7 @@ export const writeCommand: Command = {
             genSpinner.succeed("Code generated.");
         }
 
-        const writeRes = writeFile(file, finalContent, true);
+        const writeRes = await writeFile(file, finalContent, true);
         if (writeRes === "CREATED" || writeRes === "EXISTS") {
             console.log(chalk.green(`✔ Successfully wrote to ${file}`));
             ctx.addMessage({

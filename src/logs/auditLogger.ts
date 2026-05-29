@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { redactSecrets } from "../security/secrets.js";
 
 export type LogLevel = "INFO" | "WARN" | "ERROR" | "SECURITY";
 
@@ -46,10 +47,7 @@ export class AuditLogger {
     }
 
     private redact(message: string): string {
-        let redacted = message;
-        redacted = redacted.replace(/(sk-[a-zA-Z0-9]{20,})/g, "[REDACTED_API_KEY]");
-        redacted = redacted.replace(/(gsk_[a-zA-Z0-9]{20,})/g, "[REDACTED_API_KEY]");
-        return redacted;
+        return redactSecrets(message);
     }
 
     public log(level: LogLevel, context: string, message: string, executionId?: string) {

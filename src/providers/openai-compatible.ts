@@ -118,7 +118,7 @@ export class OpenAICompatibleProvider implements AIProvider {
                 try {
                     res.functionCall = {
                         name: tc.name,
-                        args: JSON.parse(tc.arguments || "{}")
+                        args: (() => { try { return JSON.parse(tc.arguments || "{}"); } catch { return {}; } })()
                     };
                 } catch (e) {
                     throw new MalformedResponseError(this.config.id, "Failed to parse tool arguments");
@@ -183,7 +183,8 @@ export class OpenAICompatibleProvider implements AIProvider {
                     if (line.trim() === "data: [DONE]") continue;
                     if (line.startsWith("data: ")) {
                         try {
-                            const data = JSON.parse(line.slice(6));
+                            let data: any;
+                            try { data = JSON.parse(line.slice(6)); } catch { continue; }
                             if (data.choices && data.choices.length > 0) {
                                 const delta = data.choices[0].delta;
                                 const events = normalizer.processDelta(delta);

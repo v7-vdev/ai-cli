@@ -152,7 +152,7 @@ export class ExecutionPipeline {
                 return `[DRY-RUN] Successfully wrote to ${filePath}`;
             }
 
-            const res = writeFile(filePath, content, true);
+            const res = await writeFile(filePath, content, true);
             if (res.startsWith("ERROR: File changed externally")) {
                 console.log(`\n\x1b[41;37;1m HIGH RISK BLOCKED: TOCTOU Violation \x1b[0m\n\x1b[33mFile changed externally during orchestration: ${filePath}\x1b[0m\n`);
                 this.ctx.logger.log("WARN", "PIPELINE", `TOCTOU violation blocked: ${filePath}`, executionId);

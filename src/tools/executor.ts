@@ -23,8 +23,8 @@ export class ToolExecutor {
             const allow = await this.ctx.permissions.requestPermission("readFile", { path: fn.args.path });
             if (allow) {
                 console.log(chalk.gray(`> AI is reading file: ${fn.args.path}`));
-                const res = readFile(fn.args.path);
-                toolResult = res.success ? res.content : res.content;
+                const res = await readFile(fn.args.path);
+                toolResult = res.content;
                 this.ctx.logger.log("INFO", "TOOL", `readFile result length: ${toolResult.length}`);
             } else {
                 toolResult = "User denied permission to read file.";

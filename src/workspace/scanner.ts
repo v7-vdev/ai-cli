@@ -71,10 +71,17 @@ export class WorkspaceScanner {
                 const frameworks = detectFrameworks(packageJson, rootFiles);
                 const packageManager = detectPackageManager(rootFiles);
 
+                const visitedPaths = new Set<string>();
+
                 // Very lightweight recursive scan to count files (non-blocking chunked)
                 async function recursiveScan(dir: string, depth: number) {
                     if (depth > MAX_SCAN_DEPTH || Date.now() - startTime > MAX_SCAN_TIME_MS - 500) return;
+                    
                     try {
+                        const realDir = await fs.promises.realpath(dir);
+                        if (visitedPaths.has(realDir)) return;
+                        visitedPaths.add(realDir);
+
                         const entries = await fs.promises.readdir(dir, { withFileTypes: true });
                         for (const entry of entries) {
                             if (IGNORED_DIRS.has(entry.name)) continue;

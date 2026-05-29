@@ -3,6 +3,7 @@ import path from 'path';
 import os from 'os';
 import chalk from 'chalk';
 import { KeyManager } from '../security/keys.js';
+import { writeAtomic } from '../utils/fs.js';
 
 export async function runInit() {
     console.log(chalk.dim('=================================================='));
@@ -44,13 +45,12 @@ export async function runInit() {
     if (fs.existsSync(configPath)) {
         try {
             config = { ...config, ...JSON.parse(fs.readFileSync(configPath, 'utf-8')) };
-            // Enforce safe mode on init
-            config.safeMode = true; 
-        } catch (e) {
-            console.log(chalk.yellow('⚠') + chalk.dim(' Existing config corrupted. Regenerating...'));
+        } catch (e: any) {
+            console.log(chalk.yellow('⚠') + chalk.dim(` Existing config corrupted (${e.message}). Quarantining to config.json.corrupt and regenerating...`));
+            try { fs.renameSync(configPath, `${configPath}.corrupt.${Date.now()}`); } catch {}
         }
     }
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 4));
+    await writeAtomic(configPath, JSON.stringify(config, null, 4));
     console.log(chalk.green('✔') + chalk.bold(' SAFE MODE ') + chalk.dim('configured as default state'));
 
     // 4. Validate Terminal Capabilities

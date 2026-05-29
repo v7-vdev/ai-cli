@@ -1,6 +1,6 @@
 import { spawn, ChildProcess } from "child_process";
-import { execSync } from "child_process";
 import { hasShellOperators } from "../security/commands.js";
+import { redactSecrets } from "../security/secrets.js";
 
 const activeProcesses = new Set<ChildProcess>();
 
@@ -9,7 +9,7 @@ export function killAllChildren() {
         if (!child.killed && child.pid) {
             try {
                 if (process.platform === "win32") {
-                    execSync(`taskkill /pid ${child.pid} /T /F`, { stdio: "ignore" });
+                    spawn("taskkill", ["/pid", child.pid.toString(), "/T", "/F"], { stdio: "ignore", windowsHide: true });
                 } else {
                     process.kill(-child.pid, "SIGKILL");
                 }
@@ -56,6 +56,8 @@ function tokenizeCommand(command: string): string[] {
     return tokens;
 }
 
+import { globalLimiter } from "../execution/limiter.js";
+
 export interface RunCommandOptions {
     cwd?: string;
     timeoutMs?: number;
@@ -68,6 +70,8 @@ export interface RunCommandResult {
     stderr: string;
     code: number | null;
 }
+
+const MAX_BUFFER_SIZE = 5 * 1024 * 1024; // 5 MB
 
 export async function runCommand(command: string | string[], options?: RunCommandOptions): Promise<RunCommandResult> {
     if (typeof command === "string" && hasShellOperators(command)) {
@@ -92,7 +96,10 @@ export async function runCommand(command: string | string[], options?: RunComman
         return { success: false, output: "Empty command.", stdout: "", stderr: "", code: 1 };
     }
 
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
+        await globalLimiter.acquire();
+        const release = () => globalLimiter.release();
+
         try {
             const child = spawn(cmd, args, { 
                 cwd: options?.cwd || process.cwd(), 
@@ -105,52 +112,78 @@ export async function runCommand(command: string | string[], options?: RunComman
             
             let stdoutData = "";
             let stderrData = "";
+            let stdoutSize = 0;
+            let stderrSize = 0;
             let timeoutHandle: NodeJS.Timeout | null = null;
+            let limitExceeded = false;
+
+            const killChild = () => {
+                if (!child.killed && child.pid) {
+                    try {
+                        if (process.platform === "win32") {
+                            spawn("taskkill", ["/pid", child.pid.toString(), "/T", "/F"], { stdio: "ignore", windowsHide: true });
+                        } else {
+                            process.kill(-child.pid, "SIGKILL");
+                        }
+                    } catch {
+                        // ignore
+                    }
+                }
+            };
 
             if (options?.timeoutMs) {
                 timeoutHandle = setTimeout(() => {
-                    if (!child.killed && child.pid) {
-                        try {
-                            if (process.platform === "win32") {
-                                execSync(`taskkill /pid ${child.pid} /T /F`, { stdio: "ignore" });
-                            } else {
-                                process.kill(-child.pid, "SIGKILL");
-                            }
-                        } catch {
-                            // ignore
-                        }
-                    }
+                    killChild();
                     activeProcesses.delete(child);
+                    const out = redactSecrets(`Error: Command timed out after ${options.timeoutMs}ms.\n` + stdoutData + "\n" + stderrData);
+                    release();
                     resolve({
                         success: false,
-                        output: `Error: Command timed out after ${options.timeoutMs}ms.\n` + stdoutData + "\n" + stderrData,
-                        stdout: stdoutData,
-                        stderr: `Error: Command timed out after ${options.timeoutMs}ms.\n` + stderrData,
+                        output: out,
+                        stdout: redactSecrets(stdoutData),
+                        stderr: redactSecrets(`Error: Command timed out after ${options.timeoutMs}ms.\n` + stderrData),
                         code: 1
                     });
                 }, options.timeoutMs);
             }
 
             if (child.stdout) {
-                child.stdout.on("data", (data: any) => {
-                    stdoutData += data.toString();
+                child.stdout.on("data", (data: Buffer) => {
+                    if (limitExceeded) return;
+                    stdoutSize += data.length;
+                    if (stdoutSize > MAX_BUFFER_SIZE) {
+                        limitExceeded = true;
+                        stdoutData += "\n[SECURITY] MAX_BUFFER_EXCEEDED: Process generated over 5MB of stdout data and was forcefully terminated to prevent OOM.";
+                        killChild();
+                    } else {
+                        stdoutData += data.toString();
+                    }
                 });
             }
 
             if (child.stderr) {
-                child.stderr.on("data", (data: any) => {
-                    stderrData += data.toString();
+                child.stderr.on("data", (data: Buffer) => {
+                    if (limitExceeded) return;
+                    stderrSize += data.length;
+                    if (stderrSize > MAX_BUFFER_SIZE) {
+                        limitExceeded = true;
+                        stderrData += "\n[SECURITY] MAX_BUFFER_EXCEEDED: Process generated over 5MB of stderr data and was forcefully terminated to prevent OOM.";
+                        killChild();
+                    } else {
+                        stderrData += data.toString();
+                    }
                 });
             }
 
             child.on("error", (err: any) => {
                 if (timeoutHandle) clearTimeout(timeoutHandle);
                 activeProcesses.delete(child);
+                release();
                 resolve({ 
                     success: false, 
-                    output: `Error: ${err.message}`,
-                    stdout: stdoutData,
-                    stderr: `Error: ${err.message}\n${stderrData}`,
+                    output: redactSecrets(`Error: ${err.message}`),
+                    stdout: redactSecrets(stdoutData),
+                    stderr: redactSecrets(`Error: ${err.message}\n${stderrData}`),
                     code: 1
                 });
             });
@@ -158,17 +191,25 @@ export async function runCommand(command: string | string[], options?: RunComman
             child.on("close", (code: number | null) => {
                 if (timeoutHandle) clearTimeout(timeoutHandle);
                 activeProcesses.delete(child);
+                
+                const finalCode = limitExceeded ? 1 : code;
+                const successState = finalCode === 0;
+                
                 const finalOutput = (stdoutData + "\n" + stderrData).trim();
+                const safeOutput = finalOutput || (finalCode !== 0 ? `Command exited with code ${finalCode}` : "Success");
+
+                release();
                 resolve({
-                    success: code === 0,
-                    output: finalOutput || (code !== 0 ? `Command exited with code ${code}` : "Success"),
-                    stdout: stdoutData,
-                    stderr: stderrData,
-                    code
+                    success: successState,
+                    output: redactSecrets(safeOutput),
+                    stdout: redactSecrets(stdoutData),
+                    stderr: redactSecrets(stderrData),
+                    code: finalCode
                 });
             });
         } catch (err: any) {
-            resolve({ success: false, output: `Error: ${err.message}`, stdout: "", stderr: err.message, code: 1 });
+            release();
+            resolve({ success: false, output: redactSecrets(`Error: ${err.message}`), stdout: "", stderr: redactSecrets(err.message), code: 1 });
         }
     });
 }

@@ -41,7 +41,7 @@ export const generateCommand: Command = {
         const finalContent = String(genRes.text || "");
         genSpinner.succeed("Code generated.");
 
-        const writeRes = writeFile(file, finalContent, true);
+        const writeRes = await writeFile(file, finalContent, true);
         if (writeRes === "CREATED" || writeRes === "EXISTS") {
             console.log(chalk.green(`✔ Successfully wrote generated code to ${file}`));
             ctx.addMessage({

@@ -1,55 +1,35 @@
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
 
 /**
- * Writes data atomically to a file to prevent partial-write corruption.
- * It writes to a temporary file in the same directory, flushes it to disk,
- * and atomically renames it over the target file.
+ * Writes a file atomically using a temporary file and rename.
+ * Includes Windows retry loop for antivirus locks.
  */
-export function writeAtomicSync(targetPath: string, data: string | Buffer, options?: fs.WriteFileOptions): void {
-    const tmpPath = `${targetPath}.tmp.${Date.now()}`;
+export async function writeAtomic(filePath: string, content: string | Buffer, options?: { mode?: number }): Promise<void> {
+    const tmpPath = `${filePath}.tmp.${Math.random().toString(36).slice(2)}`;
     
-    let fd: number | null = null;
+    const fd = fs.openSync(tmpPath, "w", options?.mode);
     try {
-        // Open file explicitly for writing
-        const mode = (typeof options === 'object' && options !== null && options.mode) ? options.mode : 0o666;
-        fd = fs.openSync(tmpPath, 'w', mode);
-        if (typeof data === 'string') {
-            fs.writeSync(fd, data);
-        } else {
-            fs.writeSync(fd, data);
-        }
-        
-        // Force flush to disk to prevent power-loss corruption
+        fs.writeFileSync(fd, content);
         fs.fsyncSync(fd);
     } finally {
-        if (fd !== null) {
-            fs.closeSync(fd);
-        }
+        fs.closeSync(fd);
     }
 
-    // Atomic rename loop for Windows lock contention
     const maxRetries = 5;
-    let attempt = 0;
-    while (attempt < maxRetries) {
+    let attempts = 0;
+    
+    while (attempts < maxRetries) {
         try {
-            fs.renameSync(tmpPath, targetPath);
-            return; // Success
+            fs.renameSync(tmpPath, filePath);
+            return;
         } catch (err: any) {
-            // EPERM/EACCES usually means antivirus is scanning the new file on Windows
-            if (err.code === 'EPERM' || err.code === 'EACCES') {
-                attempt++;
-                if (attempt >= maxRetries) {
-                    try { fs.unlinkSync(tmpPath); } catch {}
-                    throw err; // Give up
-                }
-                // Busy wait fallback (since this is sync)
-                const start = Date.now();
-                while (Date.now() - start < 50) { /* block */ }
-            } else {
+            attempts++;
+            if (attempts >= maxRetries) {
                 try { fs.unlinkSync(tmpPath); } catch {}
-                throw err;
+                throw new Error(`Failed to rename atomic file after ${maxRetries} attempts: ${err.message}`);
             }
+            await new Promise(r => setTimeout(r, 50 * attempts)); // Exponential backoff
         }
     }
 }

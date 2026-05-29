@@ -1,7 +1,6 @@
 import { runCommand } from "../tools/runCommand.js";
 import { AuditLogger } from "../logs/auditLogger.js";
 
-// In-memory cache for git availability per session
 let gitAvailableCache: boolean | null = null;
 
 export interface GitExecOptions {
@@ -10,9 +9,6 @@ export interface GitExecOptions {
     logger?: AuditLogger;
 }
 
-/**
- * Checks if the 'git' command is available in the shell path.
- */
 export async function isGitAvailable(options: GitExecOptions): Promise<boolean> {
     if (gitAvailableCache !== null) {
         return gitAvailableCache;
@@ -32,13 +28,20 @@ export async function isGitAvailable(options: GitExecOptions): Promise<boolean> 
     return gitAvailableCache;
 }
 
-/**
- * Executes a Git command safely with timeouts and non-blocking boundaries.
- */
 export async function execGit(args: string[], options: GitExecOptions): Promise<{ stdout: string; stderr: string }> {
     const available = await isGitAvailable(options);
     if (!available) {
         throw new Error("Git is not available in the current environment.");
+    }
+
+    // EXPLICIT SECURITY BOUNDARY:
+    // This function bypasses the ExecutionPipeline approval gates.
+    // Therefore, it MUST be strictly read-only.
+    const allowedReadOnlyArgs = ["status", "branch", "rev-parse", "--version", "show", "diff", "log"];
+    const action = args[0]?.toLowerCase();
+    
+    if (!action || !allowedReadOnlyArgs.includes(action)) {
+        throw new Error(`Execution boundary violation: execGit is strictly for read-only telemetry. Mutating command 'git ${action}' blocked. Use the main ExecutionPipeline instead.`);
     }
 
     const timeout = options.timeoutMs || 2000;
