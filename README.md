@@ -63,9 +63,21 @@ If ORK's own configuration is corrupted by extreme chaos (e.g. power loss during
 ## Known Limitations
 For a transparent list of current known limitations, Windows edge-cases, and testing anomalies, see [KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
 
+## Community
+Join the official Discord to discuss technical implementation, report bugs, and coordinate beta testing:
+[https://discord.gg/mJWFajpfgk](https://discord.gg/mJWFajpfgk)
+
+## Beta Testing
+ORK is currently in an active validation phase. Our current testing focus includes:
+- Windows environment stability and quirks
+- Large repository operations and deep traversals
+- `Ctrl+C` interruption handling and orphan process cleanup
+- Runtime stability under long sessions
+- Provider switching and streaming failures
+
 ## Reporting Bugs
 Bug reports should be technical, reproducible, and infrastructure-focused.
-If you experience a failure, please open an issue and include the `--audit` trace if applicable. See our [Issue Templates](.github/ISSUE_TEMPLATE) for requirements.
+Please report all bugs directly in the **#bug-reports** channel on our [Discord](https://discord.gg/mJWFajpfgk). If requested, you may also open a GitHub issue and include the `--audit` trace. See our [Issue Templates](.github/ISSUE_TEMPLATE) for requirements.
 
 ## Abuse Testing
 We actively encourage breaking the runtime. Try Ctrl+C storms, massive stdout floods, or resizing your terminal continuously during execution. 
